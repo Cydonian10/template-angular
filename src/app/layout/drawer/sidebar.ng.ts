@@ -1,4 +1,10 @@
-import { Component, inject, signal } from '@angular/core';
+import {
+  Component,
+  ElementRef,
+  inject,
+  signal,
+  ViewChild,
+} from '@angular/core';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { FontIconService } from '../../core/services/icon.service';
 import { RouterOutlet } from '@angular/router';
@@ -73,24 +79,54 @@ import { RouterOutlet } from '@angular/router';
 
       <div class="flex flex-1 flex-col overflow-hidden">
         <!-- ========== HEADER: barra superior ========== -->
-        <div class="navbar h-14 min-h-14 shrink-0 border-b border-base-300 bg-base-100 px-4">
+        <div
+          class="navbar h-14 min-h-14 shrink-0 border-b border-base-300 bg-base-100 px-4"
+        >
           <div class="navbar-start gap-2">
             <button
               class="btn btn-ghost btn-sm btn-square"
               (click)="toggle()"
               aria-label="Abrir menú"
             >
-              <fa-icon [icon]="iconService.faHamburger" class="text-xl"></fa-icon>
+              <fa-icon
+                [icon]="iconService.faHamburger"
+                class="text-xl"
+              ></fa-icon>
             </button>
-            <img src="logo-colegio.png" class="h-10 w-auto" alt="Logo colegio" />
+            <img
+              src="logo-colegio.png"
+              class="h-10 w-auto"
+              alt="Logo colegio"
+            />
           </div>
 
           <div class="navbar-center"></div>
 
           <div class="navbar-end gap-2">
-            <button class="btn btn-ghost btn-sm btn-square" aria-label="Buscar">
-              <fa-icon [icon]="iconService.faSearch"></fa-icon>
-            </button>
+            <div
+              #searchContainer
+              class="flex items-center gap-2"
+              (focusout)="onSearchFocusOut($event)"
+            >
+              <input
+                #searchInput
+                type="search"
+                placeholder="Buscar..."
+                [class.w-0]="!searchOpen()"
+                [class.w-40]="searchOpen()"
+                [class.px-0]="!searchOpen()"
+                [class.px-3]="searchOpen()"
+                [class.opacity-0]="!searchOpen()"
+                class="input input-sm input-bordered transition-all duration-300"
+              />
+              <button
+                class="btn btn-ghost btn-sm btn-square"
+                (click)="toggleSearch()"
+                aria-label="Buscar"
+              >
+                <fa-icon [icon]="iconService.faSearch"></fa-icon>
+              </button>
+            </div>
             <div class="avatar avatar-placeholder">
               <div class="w-10 rounded-full bg-primary text-primary-content">
                 <span class="font-bold">C</span>
@@ -116,7 +152,26 @@ export default class SidebarNg {
   public iconService = inject(FontIconService);
   public openSidebar = signal(true);
 
+  @ViewChild('searchInput') searchInput!: ElementRef<HTMLInputElement>;
+  @ViewChild('searchContainer')
+  searchContainer!: ElementRef<HTMLDivElement>;
+  public searchOpen = signal(false);
+
   toggle() {
     this.openSidebar.update((v) => !v);
+  }
+
+  toggleSearch() {
+    this.searchOpen.update((v) => !v);
+    if (this.searchOpen()) {
+      this.searchInput?.nativeElement.focus();
+    }
+  }
+
+  onSearchFocusOut(event: FocusEvent) {
+    const next = event.relatedTarget as Node | null;
+    if (!next || !this.searchContainer.nativeElement.contains(next)) {
+      this.searchOpen.set(false);
+    }
   }
 }
