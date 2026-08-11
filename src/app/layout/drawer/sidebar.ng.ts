@@ -1,4 +1,4 @@
-import { Component, inject, model, signal } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { FontIconService } from '../../core/services/icon.service';
 import { RouterOutlet } from '@angular/router';
@@ -7,30 +7,6 @@ import { RouterOutlet } from '@angular/router';
   selector: 'ng-sidebar',
   imports: [FontAwesomeModule, RouterOutlet],
   template: `
-    <div class="h-14 shrink-0 border-b-[0.2px]">
-      <div class="flex justify-between items-center">
-        <div class="flex gap-3 items-center">
-          <img src="logo-colegio.png" width="50" height="50" />
-          <button class="btn btn-soft btn-sm" (click)="toggle()">
-            <fa-icon
-              [icon]="iconService.faHamburger"
-              class="text-2xl"
-            ></fa-icon>
-          </button>
-        </div>
-
-        <div class="flex gap-3">
-          <button class="btn btn-soft btn-primary">
-            <fa-icon [icon]="iconService.faSearch"></fa-icon>
-          </button>
-          <div>
-            <!-- Inical del usuario si no tiene imagen -->
-            <div>C</div>
-          </div>
-        </div>
-      </div>
-    </div>
-
     <div class="flex flex-1 overflow-hidden">
       <!-- ========== OVERLAY: fondo oscuro que cierra el sidebar al hacer clic (solo móvil) ========== -->
       <div
@@ -94,19 +70,47 @@ import { RouterOutlet } from '@angular/router';
           </a>
         </div>
       </div>
-      <main class="flex-1 overflow-y-auto p-4">
-        <p>
-          Lorem ipsum dolor sit amet consectetur adipisicing elit. Architecto
-          porro id nihil dignissimos, a consequuntur maxime neque ut non
-          blanditiis sint nostrum beatae dolores, suscipit quia, rerum
-          voluptatem molestias possimus.
-        </p>
-        <router-outlet />
-      </main>
+
+      <div class="flex flex-1 flex-col overflow-hidden">
+        <!-- ========== HEADER: barra superior ========== -->
+        <div class="h-14 shrink-0 border-b-[0.2px]">
+          <div class="flex justify-between items-center">
+            <div class="flex gap-3 items-center">
+              <img src="logo-colegio.png" width="50" height="50" />
+              <button class="btn btn-soft btn-sm" (click)="toggle()">
+                <fa-icon
+                  [icon]="iconService.faHamburger"
+                  class="text-2xl"
+                ></fa-icon>
+              </button>
+            </div>
+
+            <div class="flex gap-3">
+              <button class="btn btn-soft btn-primary">
+                <fa-icon [icon]="iconService.faSearch"></fa-icon>
+              </button>
+              <div>
+                <!-- Inical del usuario si no tiene imagen -->
+                <div>C</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <main class="flex-1 overflow-y-auto p-4">
+          <p>
+            Lorem ipsum dolor sit amet consectetur adipisicing elit. Architecto
+            porro id nihil dignissimos, a consequuntur maxime neque ut non
+            blanditiis sint nostrum beatae dolores, suscipit quia, rerum
+            voluptatem molestias possimus.
+          </p>
+          <router-outlet />
+        </main>
+      </div>
     </div>
   `,
   host: {
-    class: 'flex h-dvh flex-col',
+    class: 'flex h-dvh',
   },
 })
 export default class SidebarNg {
@@ -118,9 +122,5 @@ export default class SidebarNg {
 
   toggle() {
     this.openSidebar.update((v) => !v);
-  }
-
-  ngOnInit() {
-    console.log(this.openSidebar());
   }
 }
