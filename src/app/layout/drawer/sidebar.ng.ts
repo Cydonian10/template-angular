@@ -98,12 +98,6 @@ import { RouterOutlet } from '@angular/router';
         </div>
 
         <main class="flex-1 overflow-y-auto p-4">
-          <p>
-            Lorem ipsum dolor sit amet consectetur adipisicing elit. Architecto
-            porro id nihil dignissimos, a consequuntur maxime neque ut non
-            blanditiis sint nostrum beatae dolores, suscipit quia, rerum
-            voluptatem molestias possimus.
-          </p>
           <router-outlet />
         </main>
       </div>

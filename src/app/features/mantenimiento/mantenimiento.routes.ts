@@ -1,20 +1,14 @@
 import { Routes } from '@angular/router';
 
 /**
- * ROUTES: /scap/mantenimiento/estado-asistencia/*
+ * ROUTES: /mantenimiento/*
  */
 
 const mantenimientoRoutes: Routes = [
   {
-    // path: '',
-    // loadComponent: () =>
-    //   import('./layout/estado-asistencia-layout/estado-asistencia-layout.component'),
-    // children: [
-    //   {
     path: 'unidades',
+    data: { breadcrumb: 'Unidades' },
     loadComponent: () => import('./pages/unidades/unidades.page'),
-    //   },
-    // ],
   },
 ];
 

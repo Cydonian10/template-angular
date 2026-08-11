@@ -17,6 +17,9 @@ export const routes: Routes = [
         children: [
           {
             path: 'mantenimiento',
+            data: {
+              breadcrumb: 'Matenimiento',
+            },
             loadChildren: () =>
               import('./features/mantenimiento/mantenimiento.routes'),
           },
