@@ -1,4 +1,4 @@
-import { Component, inject, model } from '@angular/core';
+import { Component, inject, model, signal } from '@angular/core';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { FontIconService } from '../../core/services/icon.service';
 import { RouterOutlet } from '@angular/router';
@@ -6,14 +6,6 @@ import { RouterOutlet } from '@angular/router';
 @Component({
   selector: 'ng-sidebar',
   imports: [FontAwesomeModule, RouterOutlet],
-  styles: [
-    `
-      :host {
-        display: block;
-        height: 100%;
-      }
-    `,
-  ],
   template: `
     <div class="h-14 shrink-0 border-b-[0.2px]">
       <div class="flex justify-between items-center">
@@ -50,8 +42,9 @@ import { RouterOutlet } from '@angular/router';
       <!-- ========== SIDEBAR PRINCIPAL ========== -->
       <div
         id="dashboard-sidebar"
-        [class]="openSidebar() ? 'w-64' : 'w-0'"
-        class="fixed top-16 bottom-0 inset-s-0 z-40 flex flex-col overflow-hidden border-e border-base-300 bg-base-100 transition-all duration-300 lg:static lg:shrink-0 lg:h-full"
+        [class.w-64]="openSidebar()"
+        [class.w-0]="!openSidebar()"
+        class="fixed inset-y-0 inset-s-0 z-40 flex flex-col overflow-hidden border-e border-base-300 bg-base-100 transition-all duration-300 lg:static lg:shrink-0 lg:h-full"
       >
         <div class="flex-1 overflow-y-auto">
           <!-- ========== ENCABEZADO: logo ========== -->
@@ -113,7 +106,7 @@ import { RouterOutlet } from '@angular/router';
     </div>
   `,
   host: {
-    class: 'flex h-screen flex-col',
+    class: 'flex h-dvh flex-col',
   },
 })
 export default class SidebarNg {
@@ -121,9 +114,13 @@ export default class SidebarNg {
 
   // ========== Servicio de iconos Font Awesome inyectado ==========
   public iconService = inject(FontIconService);
-  public openSidebar = model(false);
+  public openSidebar = signal(true);
 
   toggle() {
     this.openSidebar.update((v) => !v);
+  }
+
+  ngOnInit() {
+    console.log(this.openSidebar());
   }
 }

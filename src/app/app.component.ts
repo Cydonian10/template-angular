@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 
@@ -13,11 +13,5 @@ import { FontIconService } from './core/services/icon.service';
 export class AppComponent {
   title = 'front-scap';
 
-  openSiebar = signal(true);
-
   public iconService = inject(FontIconService);
-
-  handleOpenSidebar() {
-    this.openSiebar.update((v) => !v);
-  }
 }
