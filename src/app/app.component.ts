@@ -3,11 +3,10 @@ import { RouterOutlet } from '@angular/router';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 
 import { FontIconService } from './core/services/icon.service';
-import { SidebarNg } from './layout/drawer/sidebar.ng';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, FontAwesomeModule, SidebarNg],
+  imports: [RouterOutlet, FontAwesomeModule],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css',
 })
