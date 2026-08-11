@@ -1,2 +1,10 @@
-<ng-sidebar />
-<router-outlet />
+<div class="flex h-screen flex-col">
+  <div class="h-16 shrink-0 bg-secondary"></div>
+
+  <div class="flex flex-1 overflow-hidden">
+    <ng-sidebar [(openSidebar)]="openSiebar" />
+    <main class="flex-1 overflow-y-auto">
+      <router-outlet />
+    </main>
+  </div>
+</div>
