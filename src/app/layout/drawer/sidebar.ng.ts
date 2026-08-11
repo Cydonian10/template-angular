@@ -73,25 +73,27 @@ import { RouterOutlet } from '@angular/router';
 
       <div class="flex flex-1 flex-col overflow-hidden">
         <!-- ========== HEADER: barra superior ========== -->
-        <div class="h-14 shrink-0 border-b-[0.2px]">
-          <div class="flex justify-between items-center">
-            <div class="flex gap-3 items-center">
-              <img src="logo-colegio.png" width="50" height="50" />
-              <button class="btn btn-soft btn-sm" (click)="toggle()">
-                <fa-icon
-                  [icon]="iconService.faHamburger"
-                  class="text-2xl"
-                ></fa-icon>
-              </button>
-            </div>
+        <div class="navbar h-14 min-h-14 shrink-0 border-b border-base-300 bg-base-100 px-4">
+          <div class="navbar-start gap-2">
+            <button
+              class="btn btn-ghost btn-sm btn-square"
+              (click)="toggle()"
+              aria-label="Abrir menú"
+            >
+              <fa-icon [icon]="iconService.faHamburger" class="text-xl"></fa-icon>
+            </button>
+            <img src="logo-colegio.png" class="h-10 w-auto" alt="Logo colegio" />
+          </div>
 
-            <div class="flex gap-3">
-              <button class="btn btn-soft btn-primary">
-                <fa-icon [icon]="iconService.faSearch"></fa-icon>
-              </button>
-              <div>
-                <!-- Inical del usuario si no tiene imagen -->
-                <div>C</div>
+          <div class="navbar-center"></div>
+
+          <div class="navbar-end gap-2">
+            <button class="btn btn-ghost btn-sm btn-square" aria-label="Buscar">
+              <fa-icon [icon]="iconService.faSearch"></fa-icon>
+            </button>
+            <div class="avatar avatar-placeholder">
+              <div class="w-10 rounded-full bg-primary text-primary-content">
+                <span class="font-bold">C</span>
               </div>
             </div>
           </div>
