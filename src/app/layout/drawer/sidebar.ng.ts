@@ -30,11 +30,11 @@ import { FontIconService } from '../../core/services/icon.service';
       <div class="flex-1 overflow-y-auto">
         <!-- ========== ENCABEZADO: logo ========== -->
         <div class="p-4">
-          <span
-            class="grid h-12 w-32 place-content-center rounded-lg bg-base-200 text-sm text-base-content"
-          >
-            Logo
+          <span class="text-base-content lg:text-2xl text-center font-bold">
+            <h3>SUB SISTEMAS</h3>
           </span>
+
+          <div class="h-1 bg-base-300 my-4"></div>
 
           <!-- ========== NAVEGACIÓN: menú de enlaces ========== -->
           <nav aria-label="Dashboard" class="mt-4">
@@ -45,47 +45,7 @@ import { FontIconService } from '../../core/services/icon.service';
                   href="#"
                   class="block rounded-lg px-4 py-2 text-sm font-medium text-base-content transition-colors hover:bg-base-200"
                 >
-                  Overview
-                </a>
-              </li>
-
-              <!-- Enlace: Customers -->
-              <li>
-                <a
-                  href="#"
-                  class="block rounded-lg px-4 py-2 text-sm font-medium text-base-content transition-colors hover:bg-base-200"
-                >
-                  Customers
-                </a>
-              </li>
-
-              <!-- Enlace: Orders -->
-              <li>
-                <a
-                  href="#"
-                  class="block rounded-lg px-4 py-2 text-sm font-medium text-base-content transition-colors hover:bg-base-200"
-                >
-                  Orders
-                </a>
-              </li>
-
-              <!-- Enlace: Billing -->
-              <li>
-                <a
-                  href="#"
-                  class="block rounded-lg px-4 py-2 text-sm font-medium text-base-content transition-colors hover:bg-base-200"
-                >
-                  Billing
-                </a>
-              </li>
-
-              <!-- Enlace: Settings (enlace activo) -->
-              <li>
-                <a
-                  href="#"
-                  class="block rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-content"
-                >
-                  Settings
+                  Inicio
                 </a>
               </li>
             </ul>

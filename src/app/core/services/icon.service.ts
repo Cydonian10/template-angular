@@ -89,6 +89,7 @@ import {
   faUserPlus,
   faBan,
   faArrowRight,
+  faHamburger,
 } from '@fortawesome/free-solid-svg-icons';
 
 @Injectable({
@@ -96,6 +97,7 @@ import {
 })
 export class FontIconService {
   public faBan = faBan;
+  public faHamburger = faHamburger;
   public faArrowRight = faArrowRight;
   public faCalendarDays = faCalendarDays;
   public faTimes = faTimes;
