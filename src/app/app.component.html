@@ -1,9 +1,19 @@
 <div class="flex h-screen flex-col">
-  <div class="h-16 shrink-0 bg-secondary"></div>
+  <div class="h-16 shrink-0 bg-secondary">
+    <button class="btn btn-primary btn-sm" (click)="handleOpenSidebar()">
+      Open
+    </button>
+  </div>
 
   <div class="flex flex-1 overflow-hidden">
     <ng-sidebar [(openSidebar)]="openSiebar" />
     <main class="flex-1 overflow-y-auto">
+      <p>
+        Lorem ipsum dolor sit amet consectetur adipisicing elit. Architecto
+        porro id nihil dignissimos, a consequuntur maxime neque ut non
+        blanditiis sint nostrum beatae dolores, suscipit quia, rerum voluptatem
+        molestias possimus.
+      </p>
       <router-outlet />
     </main>
   </div>
