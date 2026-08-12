@@ -16,6 +16,13 @@ export const routes: Routes = [
         path: '',
         children: [
           {
+            path: 'inicio',
+            data: {
+              breadcrumb: 'Inicio',
+            },
+            loadComponent: () => import('./features/inicio/inicio.page'),
+          },
+          {
             path: 'mantenimiento',
             data: {
               breadcrumb: 'Matenimiento',

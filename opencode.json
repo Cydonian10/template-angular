@@ -1,0 +1,25 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "sqlserver": {
+      "type": "local",
+      "command": ["npx", "-y", "@bilims/mcp-sqlserver"],
+      "enabled": true,
+      "environment": {
+        "SQLSERVER_HOST": "192.168.0.16",
+        "SQLSERVER_PORT": "1438",
+        "SQLSERVER_USER": "sa",
+        "SQLSERVER_PASSWORD": "Desser2bdtest",
+        "SQLSERVER_DATABASE": "master",
+        "SQLSERVER_ENCRYPT": "false",
+        "SQLSERVER_TRUST_CERT": "true",
+        "SQLSERVER_MAX_ROWS": "1000"
+      }
+    }
+  },
+  "references": {
+    "api-scap": {
+      "path": "../api-scap"
+    }
+  }
+}

@@ -7,16 +7,24 @@ import {
 } from '@angular/core';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { FontIconService } from '../../core/services/icon.service';
-import { RouterOutlet } from '@angular/router';
+import { DashboardService } from '../../core/services/dashboard.service';
+import {
+  NavigationEnd,
+  Router,
+  RouterLink,
+  RouterLinkActive,
+  RouterOutlet,
+} from '@angular/router';
+import { filter } from 'rxjs';
 
 @Component({
   selector: 'ng-sidebar',
-  imports: [FontAwesomeModule, RouterOutlet],
+  imports: [FontAwesomeModule, RouterLink, RouterLinkActive, RouterOutlet],
   template: `
     <div class="flex flex-1 overflow-hidden">
       <!-- ========== OVERLAY: fondo oscuro que cierra el sidebar al hacer clic (solo móvil) ========== -->
       <div
-        class="fixed inset-0 z-30 bg-base-content/50 lg:hidden"
+        class="fixed inset-0 z-30 bg-neutral/50 lg:hidden"
         [class.hidden]="!openSidebar()"
         (click)="toggle()"
       ></div>
@@ -26,39 +34,99 @@ import { RouterOutlet } from '@angular/router';
         id="dashboard-sidebar"
         [class.w-64]="openSidebar()"
         [class.w-0]="!openSidebar()"
-        class="fixed inset-y-0 inset-s-0 z-40 flex flex-col overflow-hidden border-e border-base-300 bg-base-100 transition-all duration-300 lg:static lg:shrink-0 lg:h-full"
+        class="fixed inset-y-0 inset-s-0 z-40 flex flex-col overflow-hidden border-e border-neutral-content/10 bg-neutral text-neutral-content transition-all duration-300 lg:static lg:shrink-0 lg:h-full"
       >
         <div class="flex-1 overflow-y-auto">
           <!-- ========== ENCABEZADO: logo ========== -->
           <div class="p-4">
-            <span class="text-base-content lg:text-2xl text-center font-bold">
+            <span class="text-neutral-content lg:text-2xl text-center font-bold">
               <h3>SUB SISTEMAS</h3>
             </span>
 
-            <div class="h-1 bg-base-300 my-4"></div>
+            <div class="h-1 bg-neutral-content/10 my-4"></div>
 
             <!-- ========== NAVEGACIÓN: menú de enlaces ========== -->
             <nav aria-label="Dashboard" class="mt-4">
               <ul class="space-y-1">
-                <!-- Enlace: Overview -->
+                <!-- Enlace: Inicio -->
                 <li>
                   <a
-                    href="#"
-                    class="block rounded-lg px-4 py-2 text-sm font-medium text-base-content transition-colors hover:bg-base-200"
+                    routerLink="/inicio"
+                    routerLinkActive="bg-primary text-primary-content"
+                    [routerLinkActiveOptions]="{ exact: true }"
+                    class="flex items-center gap-3 rounded-lg px-4 py-2 text-sm font-medium text-neutral-content transition-colors hover:bg-neutral-content/10"
                   >
+                    <fa-icon
+                      [icon]="iconService.faHouse"
+                      class="text-base"
+                    ></fa-icon>
                     Inicio
                   </a>
                 </li>
+
+                <!-- ========== MÓDULOS DINÁMICOS ========== -->
+                @for (modulo of dashboardService.menu(); track modulo.id) {
+                  <li>
+                    <button
+                      type="button"
+                      (click)="dashboardService.toggleModulo(modulo.id)"
+                      class="flex w-full items-center gap-3 rounded-lg px-4 py-2 text-sm font-medium text-neutral-content transition-colors hover:bg-neutral-content/10"
+                      [class.bg-primary]="modulo.active"
+                      [class.text-primary-content]="modulo.active"
+                    >
+                      <fa-icon
+                        [icon]="dashboardService.parseIcon(modulo.icon)"
+                        class="text-base"
+                      ></fa-icon>
+                      <span class="flex-1 text-start">{{ modulo.modulo }}</span>
+                      <fa-icon
+                        [icon]="iconService.faChevronDown"
+                        class="text-sm transition-transform duration-300"
+                        [class.rotate-180]="modulo.active"
+                      ></fa-icon>
+                    </button>
+
+                    <!-- ========== SUB-ITEMS con animación ========== -->
+                    <div
+                      class="grid transition-[grid-template-rows] duration-300 ease-in-out"
+                      [class.grid-rows-[0fr]]="!modulo.active"
+                      [class.grid-rows-[1fr]]="modulo.active"
+                    >
+                      <div class="overflow-hidden">
+                        <ul class="mt-1 space-y-1 ps-4">
+                          @for (sub of modulo.menus; track sub.menuId) {
+                            <li>
+                              <a
+                                [routerLink]="sub.url"
+                                routerLinkActive="bg-primary/70 text-primary-content"
+                                (click)="
+                                  dashboardService.setActiveModulo(modulo.id)
+                                "
+                                class="flex items-center gap-3 rounded-lg px-4 py-2 text-sm text-neutral-content/80 transition-colors hover:bg-neutral-content/10 hover:text-neutral-content"
+                              >
+                                <fa-icon
+                                  [icon]="iconService.faAngleRight"
+                                  class="text-xs opacity-60"
+                                ></fa-icon>
+                                {{ sub.menu }}
+                              </a>
+                            </li>
+                          }
+                        </ul>
+                      </div>
+                    </div>
+                  </li>
+                }
               </ul>
             </nav>
           </div>
         </div>
 
         <!-- ========== PIE: perfil del usuario ========== -->
-        <div class="shrink-0 border-t border-base-300">
+        <div class="shrink-0 border-t border-neutral-content/10">
           <a
             href="#"
-            class="flex items-center gap-2 bg-base-100 p-4 hover:bg-base-200 hover:transition-colors"
+            class="flex items-center gap-2 bg-neutral p-4 transition-colors hover:bg-neutral-content/10"
           >
             <!-- Avatar del usuario -->
             <img
@@ -68,7 +136,7 @@ import { RouterOutlet } from '@angular/router';
             />
 
             <!-- Nombre y correo del usuario -->
-            <p class="text-xs text-base-content">
+            <p class="text-xs text-neutral-content">
               <strong class="block font-medium">Priya Natarajan</strong>
 
               <span>priyaorbitly.com</span>
@@ -148,14 +216,23 @@ import { RouterOutlet } from '@angular/router';
 export default class SidebarNg {
   title = 'front-scap';
 
-  // ========== Servicio de iconos Font Awesome inyectado ==========
+  // ========== Servicios inyectados ==========
   public iconService = inject(FontIconService);
+  public dashboardService = inject(DashboardService);
+  private router = inject(Router);
+
   public openSidebar = signal(true);
 
   @ViewChild('searchInput') searchInput!: ElementRef<HTMLInputElement>;
   @ViewChild('searchContainer')
   searchContainer!: ElementRef<HTMLDivElement>;
   public searchOpen = signal(false);
+
+  constructor() {
+    this.router.events
+      .pipe(filter((event) => event instanceof NavigationEnd))
+      .subscribe(() => this.syncActiveModulo());
+  }
 
   toggle() {
     this.openSidebar.update((v) => !v);
@@ -172,6 +249,19 @@ export default class SidebarNg {
     const next = event.relatedTarget as Node | null;
     if (!next || !this.searchContainer.nativeElement.contains(next)) {
       this.searchOpen.set(false);
+    }
+  }
+
+  /** Abre automáticamente el módulo que contenga la ruta activa. */
+  private syncActiveModulo(): void {
+    const url = this.router.url;
+    const match = this.dashboardService
+      .menu()
+      .find((modulo) => modulo.menus.some((sub) => url.startsWith(sub.url)));
+    if (match) {
+      this.dashboardService.setActiveModulo(match.id);
+    } else {
+      this.dashboardService.closeAll();
     }
   }
 }

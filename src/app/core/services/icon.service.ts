@@ -90,6 +90,8 @@ import {
   faBan,
   faArrowRight,
   faHamburger,
+  faHouse,
+  faAngleRight,
 } from '@fortawesome/free-solid-svg-icons';
 
 @Injectable({
@@ -187,4 +189,6 @@ export class FontIconService {
   public faComments = faComments;
   public faRedo = faRedo;
   public faPlayCircle = faPlayCircle;
+  public faHouse = faHouse;
+  public faAngleRight = faAngleRight;
 }

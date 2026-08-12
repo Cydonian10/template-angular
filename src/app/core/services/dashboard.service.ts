@@ -1,0 +1,394 @@
+import { inject, Injectable, signal } from '@angular/core';
+import { FaIconLibrary } from '@fortawesome/angular-fontawesome';
+import {
+  IconName,
+  IconPrefix,
+  IconProp,
+} from '@fortawesome/fontawesome-svg-core';
+import { fas } from '@fortawesome/free-solid-svg-icons';
+import { ModuloUsuario } from '../interfaces/menuUsuario.interface';
+
+@Injectable({
+  providedIn: 'root',
+})
+export class DashboardService {
+  private library = inject(FaIconLibrary);
+
+  constructor() {
+    this.library.addIconPacks(fas);
+  }
+
+  public menu = signal<ModuloUsuario[]>([
+    {
+      id: 2070,
+      modulo: 'Mantenimiento',
+      orden: 1,
+      active: false,
+      icon: 'fas fa-house',
+      menus: [
+        {
+          menuId: 2310,
+          menu: 'Motivo',
+          orden: 1,
+          icon: 'fas fa-mug-saucer',
+          url: '/mantenimiento/motivo',
+          moduloId: 2070,
+          externo: false,
+          permisos: [],
+          route: '',
+        },
+        {
+          menuId: 2310,
+          menu: 'Unidades',
+          orden: 1,
+          icon: 'fas fa-mug-saucer',
+          url: '/mantenimiento/unidades',
+          moduloId: 2070,
+          externo: false,
+          permisos: [],
+          route: '',
+        },
+        {
+          menuId: 2311,
+          menu: 'Estado asistencia',
+          orden: 2,
+          icon: 'fas fa-mug-saucer',
+          url: '/mantenimiento/estado-asistencia',
+          moduloId: 2070,
+          externo: false,
+          permisos: [],
+          route: '',
+        },
+      ],
+    },
+    {
+      id: 2071,
+      modulo: 'Configuración',
+      orden: 2,
+      active: false,
+      icon: 'fas fa-house',
+      menus: [
+        {
+          menuId: 2314,
+          menu: 'Rol por unidad',
+          orden: 2,
+          icon: 'fas fa-mug-saucer',
+          url: '/configuracion/rol-unidad',
+          moduloId: 2071,
+          externo: false,
+          permisos: [],
+          route: '',
+        },
+        {
+          menuId: 2313,
+          menu: 'Biometricos',
+          orden: 2,
+          icon: 'fas fa-mug-saucer',
+          url: '/configuracion/biometricos',
+          moduloId: 2071,
+          externo: false,
+          permisos: [],
+          route: '',
+        },
+        {
+          menuId: 2390,
+          menu: 'Asignar horario',
+          orden: 3,
+          icon: 'fas fa-mug-saucer',
+          url: '/configuracion/horario-2',
+          moduloId: 2071,
+          externo: false,
+          permisos: [],
+          route: '',
+        },
+        {
+          menuId: 2315,
+          menu: 'Permiso',
+          orden: 4,
+          icon: 'fas fa-mug-saucer',
+          url: '/configuracion/permisos',
+          moduloId: 2071,
+          externo: false,
+          permisos: [],
+          route: '',
+        },
+        {
+          menuId: 2316,
+          menu: 'Justificacion',
+          orden: 5,
+          icon: 'fas fa-mug-saucer',
+          url: '/configuracion/justificacion',
+          moduloId: 2071,
+          externo: false,
+          permisos: [],
+          route: '',
+        },
+        {
+          menuId: 2317,
+          menu: 'Vacaciones',
+          orden: 6,
+          icon: 'fas fa-mug-saucer',
+          url: '/configuracion/vacaciones',
+          moduloId: 2071,
+          externo: false,
+          permisos: [],
+          route: '',
+        },
+        {
+          menuId: 2318,
+          menu: 'Licencia',
+          orden: 7,
+          icon: 'fas fa-mug-saucer',
+          url: '/configuracion/licencia',
+          moduloId: 2071,
+          externo: false,
+          permisos: [],
+          route: '',
+        },
+        {
+          menuId: 2319,
+          menu: 'Controles',
+          orden: 8,
+          icon: 'fas fa-mug-saucer',
+          url: '/configuracion/controles',
+          moduloId: 2071,
+          externo: false,
+          permisos: [],
+          route: '',
+        },
+        {
+          menuId: 2320,
+          menu: 'Feriados',
+          orden: 9,
+          icon: 'fas fa-mug-saucer',
+          url: '/configuracion/feriados-unidad',
+          moduloId: 2071,
+          externo: false,
+          permisos: [],
+          route: '',
+        },
+        {
+          menuId: 2321,
+          menu: 'Asistencia Trabajador',
+          orden: 9,
+          icon: 'fas fa-mug-saucer',
+          url: '/configuracion/asistencia-trabajador',
+          moduloId: 2071,
+          externo: false,
+          permisos: [],
+          route: '',
+        },
+        {
+          menuId: 2322,
+          menu: 'Cita familiar',
+          orden: 10,
+          icon: 'fas fa-mug-saucer',
+          url: '/configuracion/cita-familiar',
+          moduloId: 2071,
+          externo: false,
+          permisos: [],
+          route: '',
+        },
+        {
+          moduloId: 2159,
+          menu: 'Horario citas',
+          orden: 16,
+          icon: 'fas fa-mug-saucer',
+          url: '/configuracion/horario-citas',
+          externo: false,
+          permisos: [],
+          route: '',
+          menuId: 0,
+        },
+        {
+          moduloId: 2159,
+          menu: 'Marcacion citas',
+          orden: 17,
+          icon: 'fas fa-mug-saucer',
+          url: '/configuracion/marcacion-citas',
+          externo: false,
+          permisos: [],
+          route: '',
+          menuId: 0,
+        },
+        {
+          moduloId: 2071,
+          menu: 'Grado supervisor',
+          orden: 11,
+          icon: 'fas fa-mug-saucer',
+          url: '/configuracion/grado-supervisor',
+          externo: false,
+          permisos: [],
+          route: '',
+          menuId: 0,
+        },
+        {
+          moduloId: 2071,
+          menu: 'Supervisor Unidad',
+          orden: 12,
+          icon: 'fas fa-mug-saucer',
+          url: '/configuracion/supervisor-unidad',
+          externo: false,
+          permisos: [],
+          route: '',
+          menuId: 0,
+        },
+        {
+          moduloId: 2071,
+          menu: 'Marcacion Manual',
+          orden: 12,
+          icon: 'fas fa-mug-saucer',
+          url: '/configuracion/marcacion-manual',
+          externo: false,
+          permisos: [],
+          route: '',
+          menuId: 0,
+        },
+        {
+          moduloId: 2071,
+          menu: 'Reprocesar Asistencia',
+          orden: 16,
+          icon: 'fas fa-mug-saucer',
+          url: '/configuracion/reprocesar-asistencia',
+          externo: false,
+          permisos: [],
+          route: '',
+          menuId: 0,
+        },
+      ],
+    },
+    {
+      id: 2072,
+      modulo: 'Reportes',
+      orden: 3,
+      active: false,
+      icon: 'fas fa-house',
+      menus: [
+        {
+          menuId: 2312,
+          menu: 'Reporte diario',
+          orden: 1,
+          icon: 'fas fa-mug-saucer',
+          url: '/reportes/diario',
+          moduloId: 2072,
+          externo: false,
+          permisos: [],
+          route: '',
+        },
+        {
+          menuId: 2312,
+          menu: 'Asistencia por colaborador',
+          orden: 2,
+          icon: 'fas fa-mug-saucer',
+          url: '/reportes/colaborador',
+          moduloId: 2072,
+          externo: false,
+          permisos: [],
+          route: '',
+        },
+        {
+          menuId: 2312,
+          menu: 'Reporte general',
+          orden: 3,
+          icon: 'fas fa-mug-saucer',
+          url: '/reportes/general',
+          moduloId: 2072,
+          externo: false,
+          permisos: [],
+          route: '',
+        },
+        {
+          menuId: 2312,
+          menu: 'Horario individual',
+          orden: 4,
+          icon: 'fas fa-mug-saucer',
+          url: '/reportes/horario',
+          moduloId: 2072,
+          externo: false,
+          permisos: [],
+          route: '',
+        },
+      ],
+    },
+    {
+      id: 2073,
+      modulo: 'Seguimiento',
+      orden: 4,
+      active: false,
+      icon: 'fas fa-house',
+      menus: [
+        {
+          menuId: 2312,
+          menu: 'Permisos',
+          orden: 1,
+          icon: 'fas fa-mug-saucer',
+          url: '/seguimiento/permisos',
+          moduloId: 2073,
+          externo: false,
+          permisos: [],
+          route: '',
+        },
+        {
+          menuId: 2312,
+          menu: 'Justificaciones',
+          orden: 2,
+          icon: 'fas fa-mug-saucer',
+          url: '/seguimiento/justificaciones',
+          moduloId: 2073,
+          externo: false,
+          permisos: [],
+          route: '',
+        },
+        {
+          menuId: 2312,
+          menu: 'Turno modificados',
+          orden: 3,
+          icon: 'fas fa-mug-saucer',
+          url: '/seguimiento/turno-modificado',
+          moduloId: 2073,
+          externo: false,
+          permisos: [],
+          route: '',
+        },
+        {
+          menuId: 2312,
+          menu: 'Licencias',
+          orden: 4,
+          icon: 'fas fa-mug-saucer',
+          url: '/seguimiento/licencias',
+          moduloId: 2073,
+          externo: false,
+          permisos: [],
+          route: '',
+        },
+      ],
+    },
+  ]);
+
+  /** Abre/cierra un módulo (accordion: solo uno abierto a la vez). */
+  toggleModulo(id: number): void {
+    this.menu.update((items) =>
+      items.map((m) => ({ ...m, active: m.id === id ? !m.active : false })),
+    );
+  }
+
+  /** Marca un módulo como activo (al hacer click en un sub-item). */
+  setActiveModulo(id: number): void {
+    this.menu.update((items) =>
+      items.map((m) => ({ ...m, active: m.id === id })),
+    );
+  }
+
+  /** Cierra todos los módulos. */
+  closeAll(): void {
+    this.menu.update((items) => items.map((m) => ({ ...m, active: false })));
+  }
+
+  /** Convierte 'fas fa-house' → ['fas', 'house'] para <fa-icon [icon]>. */
+  parseIcon(iconStr: string): IconProp {
+    const parts = iconStr.trim().split(/\s+/);
+    const prefix = (parts[0] ?? 'fas') as IconPrefix;
+    const name = (parts[1] ?? 'house').replace(/^fa-/, '') as IconName;
+    return [prefix, name];
+  }
+}
