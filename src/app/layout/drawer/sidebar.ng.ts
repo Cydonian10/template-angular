@@ -96,7 +96,7 @@ import { filter } from 'rxjs';
                     >
                       <div class="overflow-hidden">
                         <ul class="mt-1 space-y-1 ps-4">
-                          @for (sub of modulo.menus; track sub.menuId) {
+                          @for (sub of modulo.menus; track sub.url) {
                             <li>
                               <a
                                 [routerLink]="sub.url"

@@ -1,10 +1,6 @@
 import { Component, inject } from '@angular/core';
 import { DIALOG_DATA, DialogRef } from '@angular/cdk/dialog';
-import {
-  FormBuilder,
-  ReactiveFormsModule,
-  Validators,
-} from '@angular/forms';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Unidad } from '../../../../../core/interfaces/unidad.interface';
 
 export interface EditarHorasResult {
@@ -16,7 +12,9 @@ export interface EditarHorasResult {
   selector: 'editar-horas-dialog',
   imports: [ReactiveFormsModule],
   template: `
-    <div class="card bg-base-100 w-full max-w-md border border-base-300 shadow-xl">
+    <div
+      class="card bg-base-100 w-full max-w-md border border-base-300 shadow-xl"
+    >
       <div class="card-body gap-4">
         <h2 class="card-title">Editar horas</h2>
         <p class="text-sm text-base-content/70">
@@ -24,41 +22,50 @@ export interface EditarHorasResult {
         </p>
 
         <form [formGroup]="form" (ngSubmit)="guardar()" class="space-y-4">
-          <label class="form-control w-full">
-            <span class="label-text mb-1">Horas laborales diarias</span>
-            <input
-              type="number"
-              min="0"
-              class="input input-bordered w-full"
-              formControlName="horasLaborales"
-            />
-            @if (horasLaborales.invalid && horasLaborales.touched) {
-              <span class="text-error text-xs mt-1">
-                Debe ser un número mayor o igual a 0.
-              </span>
-            }
-          </label>
+          <div class="flex gap-4 flex-col">
+            <label class="form-control w-full">
+              <span class="label-text mb-1">Horas laborales diarias</span>
+              <input
+                type="number"
+                min="0"
+                class="input input-bordered w-full"
+                formControlName="horasLaborales"
+              />
+              @if (horasLaborales.invalid && horasLaborales.touched) {
+                <span class="text-error text-xs mt-1">
+                  Debe ser un número mayor o igual a 0.
+                </span>
+              }
+            </label>
 
-          <label class="form-control w-full">
-            <span class="label-text mb-1">Horas laborales totales (semanales)</span>
-            <input
-              type="number"
-              min="0"
-              class="input input-bordered w-full"
-              formControlName="horasLaboralesTotales"
-            />
-            @if (horasLaboralesTotales.invalid && horasLaboralesTotales.touched) {
-              <span class="text-error text-xs mt-1">
-                Debe ser un número mayor o igual a 0.
-              </span>
-            }
-          </label>
-
+            <label class="form-control w-full">
+              <span class="label-text mb-1"
+                >Horas laborales totales (semanales)</span
+              >
+              <input
+                type="number"
+                min="0"
+                class="input input-bordered w-full"
+                formControlName="horasLaboralesTotales"
+              />
+              @if (
+                horasLaboralesTotales.invalid && horasLaboralesTotales.touched
+              ) {
+                <span class="text-error text-xs mt-1">
+                  Debe ser un número mayor o igual a 0.
+                </span>
+              }
+            </label>
+          </div>
           <div class="card-actions justify-end pt-2">
             <button type="button" class="btn btn-ghost" (click)="cancelar()">
               Cancelar
             </button>
-            <button type="submit" class="btn btn-primary" [disabled]="form.invalid">
+            <button
+              type="submit"
+              class="btn btn-primary"
+              [disabled]="form.invalid"
+            >
               Guardar
             </button>
           </div>

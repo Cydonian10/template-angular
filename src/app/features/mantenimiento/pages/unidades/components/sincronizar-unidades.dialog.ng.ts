@@ -1,6 +1,7 @@
 import { Component, inject, signal } from '@angular/core';
 import { DIALOG_DATA, DialogRef } from '@angular/cdk/dialog';
 import { firstValueFrom } from 'rxjs';
+import { ToastrService } from 'ngx-toastr';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { FontIconService } from '../../../../../core/services/icon.service';
 import { UnidadesService } from '../../../../../api/unidades.service';
@@ -22,12 +23,6 @@ export interface SincronizarResult {
         <p class="text-sm text-base-content/70">
           Las <code>Unidades</code> ya migradas aparecen deshabilitadas.
         </p>
-
-        @if (error(); as e) {
-          <div class="alert alert-error">
-            <span>{{ e }}</span>
-          </div>
-        }
 
         @if (loading() && !items().length) {
           <div class="flex justify-center py-6">
@@ -113,24 +108,24 @@ export interface SincronizarResult {
 export default class SincronizarUnidadesDialog {
   public iconService = inject(FontIconService);
   #service = inject(UnidadesService);
+  #toastr = inject(ToastrService);
   #ref = inject(DialogRef<SincronizarResult>);
 
   public data = inject(DIALOG_DATA) as SyncUnidad[];
   public items = signal<SyncUnidad[]>([]);
   public loading = signal(false);
-  public error = signal<string | null>(null);
 
   constructor() {
     this.items.set([...this.data]);
   }
 
-  protected hayPendientes = (): boolean => this.items().some((s) => !s.migrado);
+  protected hayPendientes = (): boolean =>
+    this.items().some((s) => !s.migrado);
 
   protected todasMigradas = (): boolean =>
     this.items().length > 0 && this.items().every((s) => s.migrado);
 
   async migrarUna(id: number): Promise<void> {
-    this.error.set(null);
     this.loading.set(true);
     try {
       const res = await firstValueFrom(
@@ -142,18 +137,18 @@ export default class SincronizarUnidadesDialog {
             i.syncUnidadId === id ? { ...i, migrado: true } : i,
           ),
         );
+        this.#toastr.success(res.Message);
       } else {
-        this.error.set(res.Message);
+        this.#toastr.error(res.Message);
       }
     } catch {
-      this.error.set('Error al migrar la unidad');
+      this.#toastr.error('Error al migrar la unidad');
     } finally {
       this.loading.set(false);
     }
   }
 
   async migrarTodas(): Promise<void> {
-    this.error.set(null);
     this.loading.set(true);
     try {
       const res = await firstValueFrom(this.#service.migrar());
@@ -161,16 +156,16 @@ export default class SincronizarUnidadesDialog {
         this.items.update((items) =>
           items.map((i) => ({ ...i, migrado: true })),
         );
+        this.#toastr.success(res.Message);
       } else {
-        this.error.set(res.Message);
+        this.#toastr.error(res.Message);
       }
     } catch {
-      this.error.set('Error al migrar las unidades');
+      this.#toastr.error('Error al migrar las unidades');
     } finally {
       this.loading.set(false);
     }
   }
-
   cerrar(): void {
     this.#ref.close({ recargar: true });
   }

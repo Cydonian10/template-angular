@@ -1,6 +1,7 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { Dialog } from '@angular/cdk/dialog';
 import { firstValueFrom } from 'rxjs';
+import { ToastrService } from 'ngx-toastr';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { FontIconService } from '../../../../core/services/icon.service';
 import { UnidadesService } from '../../../../api/unidades.service';
@@ -16,11 +17,6 @@ import {
   SyncUnidad,
   Unidad,
 } from '../../../../core/interfaces/unidad.interface';
-
-interface Toast {
-  type: 'success' | 'error';
-  msg: string;
-}
 
 @Component({
   selector: 'unidades-page',
@@ -47,19 +43,6 @@ interface Toast {
           </button>
         </div>
       </div>
-
-      <!-- ========== TOAST ========== -->
-      @if (toast(); as t) {
-        <div class="toast toast-top toast-end z-50">
-          <div
-            class="alert"
-            [class.alert-success]="t.type === 'success'"
-            [class.alert-error]="t.type === 'error'"
-          >
-            <span>{{ t.msg }}</span>
-          </div>
-        </div>
-      }
 
       <!-- ========== CONFIRMACIÓN DE ELIMINACIÓN ========== -->
       @if (confirmarEliminar(); as u) {
@@ -110,12 +93,12 @@ export default class UnidadesPage {
   public iconService = inject(FontIconService);
   #unidadesService = inject(UnidadesService);
   #dialog = inject(Dialog);
+  #toastr = inject(ToastrService);
 
   public migradas = signal<Unidad[]>([]);
   public sync = signal<SyncUnidad[]>([]);
   public loadingMigradas = signal(false);
   public loadingSync = signal(false);
-  public toast = signal<Toast | null>(null);
   public confirmarEliminar = signal<Unidad | null>(null);
 
   public pendientesCount = computed(
@@ -123,6 +106,7 @@ export default class UnidadesPage {
   );
 
   constructor() {
+    this.#toastr.success('jalaksjdfadf');
     this.cargar();
   }
 
@@ -135,10 +119,7 @@ export default class UnidadesPage {
     try {
       this.sync.set(await firstValueFrom(this.#unidadesService.sync()));
     } catch {
-      this.mostrarToast(
-        'error',
-        'No se pudieron cargar las unidades pendientes',
-      );
+      this.#toastr.error('No se pudieron cargar las unidades pendientes');
     } finally {
       this.loadingSync.set(false);
     }
@@ -151,7 +132,7 @@ export default class UnidadesPage {
         await firstValueFrom(this.#unidadesService.listar(busqueda)),
       );
     } catch {
-      this.mostrarToast('error', 'No se pudieron cargar las unidades migradas');
+      this.#toastr.error('No se pudieron cargar las unidades migradas');
     } finally {
       this.loadingMigradas.set(false);
     }
@@ -187,10 +168,14 @@ export default class UnidadesPage {
       const res = await firstValueFrom(
         this.#unidadesService.actualizar(id, dto),
       );
-      this.mostrarToast(res.State === 1 ? 'success' : 'error', res.Message);
+      console.log(res);
+      res.State === 1
+        ? this.#toastr.success(res.Message)
+        : this.#toastr.error(res.Message);
+
       await this.cargarMigradas();
     } catch {
-      this.mostrarToast('error', 'Error al actualizar las horas');
+      this.#toastr.error('Error al actualizar las horas');
     }
   }
 
@@ -212,20 +197,17 @@ export default class UnidadesPage {
       const res = await firstValueFrom(
         this.#unidadesService.eliminar(unidad.unidadId),
       );
-      this.mostrarToast(res.State === 1 ? 'success' : 'error', res.Message);
+      res.State === 1
+        ? this.#toastr.success(res.Message)
+        : this.#toastr.error(res.Message);
       await this.cargar();
     } catch {
-      this.mostrarToast('error', 'Error al eliminar la unidad');
+      this.#toastr.error('Error al eliminar la unidad');
     }
   }
 
   buscar(event: Event): void {
     const value = (event.target as HTMLInputElement).value.trim();
     this.cargarMigradas(value || undefined);
-  }
-
-  private mostrarToast(type: Toast['type'], msg: string): void {
-    this.toast.set({ type, msg });
-    setTimeout(() => this.toast.set(null), 4000);
   }
 }
