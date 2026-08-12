@@ -39,7 +39,9 @@ import { filter } from 'rxjs';
         <div class="flex-1 overflow-y-auto">
           <!-- ========== ENCABEZADO: logo ========== -->
           <div class="p-4">
-            <span class="text-neutral-content lg:text-2xl text-center font-bold">
+            <span
+              class="text-neutral-content lg:text-2xl text-center font-bold"
+            >
               <h3>SUB SISTEMAS</h3>
             </span>
 
@@ -105,7 +107,7 @@ import { filter } from 'rxjs';
                                 class="flex items-center gap-3 rounded-lg px-4 py-2 text-sm text-neutral-content/80 transition-colors hover:bg-neutral-content/10 hover:text-neutral-content"
                               >
                                 <fa-icon
-                                  [icon]="iconService.faAngleRight"
+                                  [icon]="iconService.faCoffee"
                                   class="text-xs opacity-60"
                                 ></fa-icon>
                                 {{ sub.menu }}
