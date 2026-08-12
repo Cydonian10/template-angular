@@ -1,15 +1,17 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { Dialog } from '@angular/cdk/dialog';
 import { firstValueFrom } from 'rxjs';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { FontIconService } from '../../../../core/services/icon.service';
 import { UnidadesService } from '../../../../api/unidades.service';
 import BreadcrumbsNg from '../../../../layout/breadcrumbs/breadcrumbs.ng';
-import SyncUnidadesList from './components/sync-unidades-list.ng';
 import UnidadesTable from './components/unidades-table.ng';
 import EditarHorasDialog, {
   EditarHorasResult,
 } from './components/editar-horas.dialog.ng';
+import SincronizarUnidadesDialog, {
+  SincronizarResult,
+} from './components/sincronizar-unidades.dialog.ng';
 import { SyncUnidad, Unidad } from '../../../../core/interfaces/unidad.interface';
 
 interface Toast {
@@ -19,12 +21,28 @@ interface Toast {
 
 @Component({
   selector: 'unidades-page',
-  imports: [FontAwesomeModule, BreadcrumbsNg, SyncUnidadesList, UnidadesTable],
+  imports: [FontAwesomeModule, BreadcrumbsNg, UnidadesTable],
   template: `
     <ng-breadcrumbs />
 
     <div class="mt-4 space-y-6">
-      <h1 class="text-2xl font-bold">Unidades</h1>
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <h1 class="text-2xl font-bold">Unidades</h1>
+
+        <div class="flex items-center gap-2">
+          <button
+            class="btn btn-primary"
+            (click)="abrirSincronizar()"
+            [disabled]="loadingSync()"
+          >
+            <fa-icon [icon]="iconService.faCirclePlus"></fa-icon>
+            Sincronizar unidades
+            @if (pendientesCount() > 0) {
+              <span class="badge badge-sm">{{ pendientesCount() }}</span>
+            }
+          </button>
+        </div>
+      </div>
 
       <!-- ========== TOAST ========== -->
       @if (toast(); as t) {
@@ -62,7 +80,9 @@ interface Toast {
       }
 
       <!-- ========== BÚSQUEDA ========== -->
-      <label class="input input-bordered flex w-full max-w-sm items-center gap-2">
+      <label
+        class="input input-bordered flex w-full max-w-sm items-center gap-2"
+      >
         <fa-icon [icon]="iconService.faSearch"></fa-icon>
         <input
           type="search"
@@ -71,14 +91,6 @@ interface Toast {
           (input)="buscar($event)"
         />
       </label>
-
-      <!-- ========== UNIDADES POR MIGRAR ========== -->
-      <sync-unidades-list
-        [sync]="sync()"
-        [loading]="loadingSync()"
-        (migrarUna)="migrarUna($event)"
-        (migrarTodas)="migrarTodas()"
-      />
 
       <!-- ========== UNIDADES MIGRADAS ========== -->
       <unidades-table
@@ -102,6 +114,10 @@ export default class UnidadesPage {
   public toast = signal<Toast | null>(null);
   public confirmarEliminar = signal<Unidad | null>(null);
 
+  public pendientesCount = computed(
+    () => this.sync().filter((s) => !s.migrado).length,
+  );
+
   constructor() {
     this.cargar();
   }
@@ -115,7 +131,10 @@ export default class UnidadesPage {
     try {
       this.sync.set(await firstValueFrom(this.#unidadesService.sync()));
     } catch {
-      this.mostrarToast('error', 'No se pudieron cargar las unidades pendientes');
+      this.mostrarToast(
+        'error',
+        'No se pudieron cargar las unidades pendientes',
+      );
     } finally {
       this.loadingSync.set(false);
     }
@@ -134,26 +153,16 @@ export default class UnidadesPage {
     }
   }
 
-  async migrarUna(syncUnidadId: number): Promise<void> {
-    try {
-      const res = await firstValueFrom(
-        this.#unidadesService.migrar({ syncUnidadId }),
-      );
-      this.mostrarToast(res.State === 1 ? 'success' : 'error', res.Message);
-      await this.cargar();
-    } catch {
-      this.mostrarToast('error', 'Error al migrar la unidad');
-    }
-  }
-
-  async migrarTodas(): Promise<void> {
-    try {
-      const res = await firstValueFrom(this.#unidadesService.migrar());
-      this.mostrarToast(res.State === 1 ? 'success' : 'error', res.Message);
-      await this.cargar();
-    } catch {
-      this.mostrarToast('error', 'Error al migrar las unidades');
-    }
+  abrirSincronizar(): void {
+    const pendientes = this.sync().filter((s) => !s.migrado);
+    const ref = this.#dialog.open<SincronizarResult>(SincronizarUnidadesDialog, {
+      data: pendientes,
+    });
+    ref.closed.subscribe((result) => {
+      if (result?.recargar) {
+        this.cargar();
+      }
+    });
   }
 
   abrirEditarHoras(unidad: Unidad): void {
@@ -169,7 +178,9 @@ export default class UnidadesPage {
 
   async guardarHoras(id: number, dto: EditarHorasResult): Promise<void> {
     try {
-      const res = await firstValueFrom(this.#unidadesService.actualizar(id, dto));
+      const res = await firstValueFrom(
+        this.#unidadesService.actualizar(id, dto),
+      );
       this.mostrarToast(res.State === 1 ? 'success' : 'error', res.Message);
       await this.cargarMigradas();
     } catch {
