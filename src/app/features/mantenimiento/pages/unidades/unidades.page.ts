@@ -106,7 +106,6 @@ export default class UnidadesPage {
   );
 
   constructor() {
-    this.#toastr.success('jalaksjdfadf');
     this.cargar();
   }
 
@@ -143,6 +142,7 @@ export default class UnidadesPage {
       SincronizarUnidadesDialog,
       {
         data: this.sync(),
+        disableClose: true,
       },
     );
     ref.closed.subscribe((result) => {
@@ -155,6 +155,7 @@ export default class UnidadesPage {
   abrirEditarHoras(unidad: Unidad): void {
     const ref = this.#dialog.open<EditarHorasResult>(EditarHorasDialog, {
       data: unidad,
+      disableClose: true,
     });
     ref.closed.subscribe((result) => {
       if (result) {
