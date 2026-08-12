@@ -12,7 +12,10 @@ import EditarHorasDialog, {
 import SincronizarUnidadesDialog, {
   SincronizarResult,
 } from './components/sincronizar-unidades.dialog.ng';
-import { SyncUnidad, Unidad } from '../../../../core/interfaces/unidad.interface';
+import {
+  SyncUnidad,
+  Unidad,
+} from '../../../../core/interfaces/unidad.interface';
 
 interface Toast {
   type: 'success' | 'error';
@@ -37,6 +40,7 @@ interface Toast {
           >
             <fa-icon [icon]="iconService.faCirclePlus"></fa-icon>
             Sincronizar unidades
+
             @if (pendientesCount() > 0) {
               <span class="badge badge-sm">{{ pendientesCount() }}</span>
             }
@@ -154,10 +158,12 @@ export default class UnidadesPage {
   }
 
   abrirSincronizar(): void {
-    const pendientes = this.sync().filter((s) => !s.migrado);
-    const ref = this.#dialog.open<SincronizarResult>(SincronizarUnidadesDialog, {
-      data: pendientes,
-    });
+    const ref = this.#dialog.open<SincronizarResult>(
+      SincronizarUnidadesDialog,
+      {
+        data: this.sync(),
+      },
+    );
     ref.closed.subscribe((result) => {
       if (result?.recargar) {
         this.cargar();

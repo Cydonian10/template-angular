@@ -20,8 +20,7 @@ export interface SincronizarResult {
       <div class="card-body gap-3">
         <h2 class="card-title">Sincronizar unidades</h2>
         <p class="text-sm text-base-content/70">
-          Unidades pendientes de migración desde
-          <code>SyncUnidad</code>.
+          Las <code>Unidades</code> ya migradas aparecen deshabilitadas.
         </p>
 
         @if (error(); as e) {
@@ -39,10 +38,14 @@ export interface SincronizarResult {
             ></fa-icon>
           </div>
         } @else if (!items().length) {
-          <p class="text-sm text-base-content/60 py-4">
-            No hay unidades pendientes.
-          </p>
+          <p class="text-sm text-base-content/60 py-4">No hay unidades.</p>
         } @else {
+          @if (todasMigradas()) {
+            <div class="alert alert-success">
+              <span>Todas las unidades ya fueron migradas.</span>
+            </div>
+          }
+
           <div class="flex justify-end">
             <button
               class="btn btn-sm btn-primary"
@@ -81,16 +84,17 @@ export interface SincronizarResult {
                       }
                     </td>
                     <td class="text-end">
-                      @if (!s.migrado) {
-                        <button
-                          class="btn btn-xs btn-outline btn-primary"
-                          (click)="migrarUna(s.syncUnidadId)"
-                          [disabled]="loading()"
-                        >
-                          <fa-icon [icon]="iconService.faArrowRight"></fa-icon>
-                          Migrar
-                        </button>
-                      }
+                      <button
+                        class="btn btn-xs"
+                        [class.btn-primary]="!s.migrado"
+                        [class.btn-outline]="!s.migrado"
+                        [class.btn-disabled]="s.migrado"
+                        (click)="!s.migrado && migrarUna(s.syncUnidadId)"
+                        [disabled]="loading() || s.migrado"
+                      >
+                        <fa-icon [icon]="iconService.faArrowRight"></fa-icon>
+                        {{ s.migrado ? 'Migrado' : 'Migrar' }}
+                      </button>
                     </td>
                   </tr>
                 }
@@ -120,8 +124,10 @@ export default class SincronizarUnidadesDialog {
     this.items.set([...this.data]);
   }
 
-  protected hayPendientes = (): boolean =>
-    this.items().some((s) => !s.migrado);
+  protected hayPendientes = (): boolean => this.items().some((s) => !s.migrado);
+
+  protected todasMigradas = (): boolean =>
+    this.items().length > 0 && this.items().every((s) => s.migrado);
 
   async migrarUna(id: number): Promise<void> {
     this.error.set(null);
