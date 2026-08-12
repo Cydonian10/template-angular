@@ -1,6 +1,7 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { Dialog } from '@angular/cdk/dialog';
-import { firstValueFrom } from 'rxjs';
+import { BehaviorSubject, EMPTY, catchError, of, switchMap, tap } from 'rxjs';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { ToastrService } from 'ngx-toastr';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { FontIconService } from '../../../../core/services/icon.service';
@@ -14,9 +15,11 @@ import SincronizarUnidadesDialog, {
   SincronizarResult,
 } from './components/sincronizar-unidades.dialog.ng';
 import {
+  OperationResult,
   SyncUnidad,
   Unidad,
 } from '../../../../core/interfaces/unidad.interface';
+import { DestroyRef } from '@angular/core';
 
 @Component({
   selector: 'unidades-page',
@@ -94,48 +97,50 @@ export default class UnidadesPage {
   #unidadesService = inject(UnidadesService);
   #dialog = inject(Dialog);
   #toastr = inject(ToastrService);
+  #destroyRef = inject(DestroyRef);
 
-  public migradas = signal<Unidad[]>([]);
-  public sync = signal<SyncUnidad[]>([]);
   public loadingMigradas = signal(false);
   public loadingSync = signal(false);
   public confirmarEliminar = signal<Unidad | null>(null);
 
+  #reload$ = new BehaviorSubject<void>(undefined);
+  #busqueda$ = new BehaviorSubject<string | undefined>(undefined);
+
+  public sync = toSignal(
+    this.#reload$.pipe(
+      tap(() => this.loadingSync.set(true)),
+      switchMap(() =>
+        this.#unidadesService.sync().pipe(
+          catchError(() => {
+            this.#toastr.error('No se pudieron cargar las unidades pendientes');
+            return of([] as SyncUnidad[]);
+          }),
+        ),
+      ),
+      tap(() => this.loadingSync.set(false)),
+    ),
+    { initialValue: [] as SyncUnidad[] },
+  );
+
+  public migradas = toSignal(
+    this.#busqueda$.pipe(
+      tap(() => this.loadingMigradas.set(true)),
+      switchMap((busqueda) =>
+        this.#unidadesService.listar(busqueda).pipe(
+          catchError(() => {
+            this.#toastr.error('No se pudieron cargar las unidades migradas');
+            return of([] as Unidad[]);
+          }),
+        ),
+      ),
+      tap(() => this.loadingMigradas.set(false)),
+    ),
+    { initialValue: [] as Unidad[] },
+  );
+
   public pendientesCount = computed(
     () => this.sync().filter((s) => !s.migrado).length,
   );
-
-  constructor() {
-    this.cargar();
-  }
-
-  async cargar(): Promise<void> {
-    await Promise.all([this.cargarSync(), this.cargarMigradas()]);
-  }
-
-  async cargarSync(): Promise<void> {
-    this.loadingSync.set(true);
-    try {
-      this.sync.set(await firstValueFrom(this.#unidadesService.sync()));
-    } catch {
-      this.#toastr.error('No se pudieron cargar las unidades pendientes');
-    } finally {
-      this.loadingSync.set(false);
-    }
-  }
-
-  async cargarMigradas(busqueda?: string): Promise<void> {
-    this.loadingMigradas.set(true);
-    try {
-      this.migradas.set(
-        await firstValueFrom(this.#unidadesService.listar(busqueda)),
-      );
-    } catch {
-      this.#toastr.error('No se pudieron cargar las unidades migradas');
-    } finally {
-      this.loadingMigradas.set(false);
-    }
-  }
 
   abrirSincronizar(): void {
     const ref = this.#dialog.open<SincronizarResult>(
@@ -145,11 +150,13 @@ export default class UnidadesPage {
         disableClose: true,
       },
     );
-    ref.closed.subscribe((result) => {
-      if (result?.recargar) {
-        this.cargar();
-      }
-    });
+    ref.closed
+      .pipe(takeUntilDestroyed(this.#destroyRef))
+      .subscribe((result) => {
+        if (result?.recargar) {
+          this.recargar();
+        }
+      });
   }
 
   abrirEditarHoras(unidad: Unidad): void {
@@ -157,27 +164,28 @@ export default class UnidadesPage {
       data: unidad,
       disableClose: true,
     });
-    ref.closed.subscribe((result) => {
-      if (result) {
-        this.guardarHoras(unidad.unidadId, result);
-      }
-    });
+    ref.closed
+      .pipe(takeUntilDestroyed(this.#destroyRef))
+      .subscribe((result) => {
+        if (result) {
+          this.guardarHoras(unidad.unidadId, result);
+        }
+      });
   }
 
-  async guardarHoras(id: number, dto: EditarHorasResult): Promise<void> {
-    try {
-      const res = await firstValueFrom(
-        this.#unidadesService.actualizar(id, dto),
-      );
-      console.log(res);
-      res.State === 1
-        ? this.#toastr.success(res.Message)
-        : this.#toastr.error(res.Message);
-
-      await this.cargarMigradas();
-    } catch {
-      this.#toastr.error('Error al actualizar las horas');
-    }
+  private guardarHoras(id: number, dto: EditarHorasResult): void {
+    this.#unidadesService
+      .actualizar(id, dto)
+      .pipe(
+        takeUntilDestroyed(this.#destroyRef),
+        tap((res) => this.procesarResultado(res)),
+        tap(() => this.recargarMigradas()),
+        catchError(() => {
+          this.#toastr.error('Error al actualizar las horas');
+          return EMPTY;
+        }),
+      )
+      .subscribe();
   }
 
   pedirEliminar(unidad: Unidad): void {
@@ -188,27 +196,43 @@ export default class UnidadesPage {
     this.confirmarEliminar.set(null);
   }
 
-  async confirmarEliminacion(): Promise<void> {
+  confirmarEliminacion(): void {
     const unidad = this.confirmarEliminar();
     if (!unidad) {
       return;
     }
     this.confirmarEliminar.set(null);
-    try {
-      const res = await firstValueFrom(
-        this.#unidadesService.eliminar(unidad.unidadId),
-      );
-      res.State === 1
-        ? this.#toastr.success(res.Message)
-        : this.#toastr.error(res.Message);
-      await this.cargar();
-    } catch {
-      this.#toastr.error('Error al eliminar la unidad');
-    }
+    this.#unidadesService
+      .eliminar(unidad.unidadId)
+      .pipe(
+        takeUntilDestroyed(this.#destroyRef),
+        tap((res) => this.procesarResultado(res)),
+        tap(() => this.recargar()),
+        catchError(() => {
+          this.#toastr.error('Error al eliminar la unidad');
+          return EMPTY;
+        }),
+      )
+      .subscribe();
   }
 
   buscar(event: Event): void {
     const value = (event.target as HTMLInputElement).value.trim();
-    this.cargarMigradas(value || undefined);
+    this.#busqueda$.next(value || undefined);
+  }
+
+  private procesarResultado(res: OperationResult): void {
+    res.State === 1
+      ? this.#toastr.success(res.Message)
+      : this.#toastr.error(res.Message);
+  }
+
+  private recargarMigradas(): void {
+    this.#busqueda$.next(this.#busqueda$.getValue());
+  }
+
+  private recargar(): void {
+    this.#reload$.next();
+    this.recargarMigradas();
   }
 }
