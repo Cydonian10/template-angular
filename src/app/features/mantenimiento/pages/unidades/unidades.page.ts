@@ -1,6 +1,14 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { Dialog } from '@angular/cdk/dialog';
-import { BehaviorSubject, EMPTY, catchError, of, switchMap, tap } from 'rxjs';
+import {
+  BehaviorSubject,
+  EMPTY,
+  catchError,
+  debounceTime,
+  of,
+  switchMap,
+  tap,
+} from 'rxjs';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { ToastrService } from 'ngx-toastr';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
@@ -124,6 +132,7 @@ export default class UnidadesPage {
 
   public migradas = toSignal(
     this.#busqueda$.pipe(
+      debounceTime(300),
       tap(() => this.loadingMigradas.set(true)),
       switchMap((busqueda) =>
         this.#unidadesService.listar(busqueda).pipe(
