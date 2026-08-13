@@ -1,5 +1,6 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { Dialog } from '@angular/cdk/dialog';
+import { Router } from '@angular/router';
 import {
   BehaviorSubject,
   EMPTY,
@@ -94,6 +95,7 @@ import { DestroyRef } from '@angular/core';
       <unidades-table
         [unidades]="migradas()"
         [loading]="loadingMigradas()"
+        (verAreas)="verAreas($event)"
         (editar)="abrirEditarHoras($event)"
         (eliminar)="pedirEliminar($event)"
       />
@@ -106,6 +108,7 @@ export default class UnidadesPage {
   #dialog = inject(Dialog);
   #toastr = inject(ToastrService);
   #destroyRef = inject(DestroyRef);
+  #router = inject(Router);
 
   public loadingMigradas = signal(false);
   public loadingSync = signal(false);
@@ -180,6 +183,10 @@ export default class UnidadesPage {
           this.guardarHoras(unidad.unidadId, result);
         }
       });
+  }
+
+  verAreas(unidad: Unidad): void {
+    this.#router.navigate(['/mantenimiento/unidades', unidad.unidadId]);
   }
 
   private guardarHoras(id: number, dto: EditarHorasResult): void {

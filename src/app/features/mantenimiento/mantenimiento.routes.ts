@@ -20,7 +20,18 @@ const mantenimientoRoutes: Routes = [
         loadComponent: () =>
           import('./pages/lista-unidades/lista-unidades.page'),
       },
+      {
+        path: ':unidadId',
+        data: { breadcrumb: 'Áreas de la unidad' },
+        loadComponent: () =>
+          import('./pages/unidades-areas/unidades-areas.page'),
+      },
     ],
+  },
+  {
+    path: 'areas',
+    data: { breadcrumb: 'Áreas' },
+    loadComponent: () => import('./pages/areas/areas.page'),
   },
 ];
 

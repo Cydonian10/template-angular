@@ -1,15 +1,15 @@
 import { Component, inject, input, output } from '@angular/core';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { FontIconService } from '../../../../../core/services/icon.service';
-import { Unidad } from '../../../../../core/interfaces/unidad.interface';
+import { Area } from '../../../../../core/interfaces/area.interface';
 
 @Component({
-  selector: 'unidades-table',
+  selector: 'areas-table',
   imports: [FontAwesomeModule],
   template: `
     <div class="card bg-base-100 border border-base-300">
       <div class="card-body">
-        <h2 class="card-title">Unidades migradas</h2>
+        <h2 class="card-title">Áreas</h2>
 
         @if (loading()) {
           <div class="flex justify-center py-6">
@@ -19,50 +19,40 @@ import { Unidad } from '../../../../../core/interfaces/unidad.interface';
               class="text-2xl text-primary"
             ></fa-icon>
           </div>
-        } @else if (!unidades().length) {
+        } @else if (!areas().length) {
           <p class="text-sm text-base-content/60 py-4">
-            No hay unidades migradas.
+            No hay áreas registradas.
           </p>
         } @else {
           <div class="overflow-x-auto">
             <table class="table table-sm">
               <thead>
                 <tr>
-                  <th>Código</th>
+                  <th>Unidad</th>
                   <th>Nombre</th>
-                  <th>Horas diarias</th>
-                  <th>Horas semanales</th>
+                  <th>Descripción</th>
                   <th></th>
                 </tr>
               </thead>
               <tbody>
-                @for (u of unidades(); track u.unidadId) {
+                @for (a of areas(); track a.areaId) {
                   <tr>
-                    <td>{{ u.codigo }}</td>
-                    <td>{{ u.nombre }}</td>
-                    <td>{{ u.horasLaborales }}</td>
-                    <td>{{ u.horasLaboralesTotales }}</td>
+                    <td>{{ a.unidadId }}</td>
+                    <td>{{ a.nombre }}</td>
+                    <td>{{ a.descripcion }}</td>
                     <td class="text-end">
                       <div class="flex justify-end gap-1">
                         <button
                           class="btn btn-xs btn-outline"
-                          (click)="verAreas.emit(u)"
-                          aria-label="Ver áreas de la unidad"
-                        >
-                          <fa-icon [icon]="iconService.faWarehouse"></fa-icon>
-                          Áreas
-                        </button>
-                        <button
-                          class="btn btn-xs btn-outline"
-                          (click)="editar.emit(u)"
-                          aria-label="Editar horas"
+                          (click)="editar.emit(a)"
+                          aria-label="Editar área"
                         >
                           <fa-icon [icon]="iconService.faEdit"></fa-icon>
                         </button>
                         <button
                           class="btn btn-xs btn-outline btn-error"
-                          (click)="eliminar.emit(u)"
-                          aria-label="Eliminar"
+                          (click)="eliminar.emit(a)"
+                          aria-label="Eliminar área"
                         >
                           <fa-icon [icon]="iconService.faTrash"></fa-icon>
                         </button>
@@ -78,12 +68,11 @@ import { Unidad } from '../../../../../core/interfaces/unidad.interface';
     </div>
   `,
 })
-export default class UnidadesTable {
+export default class AreasTable {
   public iconService = inject(FontIconService);
 
-  public unidades = input<Unidad[]>([]);
+  public areas = input<Area[]>([]);
   public loading = input(false);
-  public verAreas = output<Unidad>();
-  public editar = output<Unidad>();
-  public eliminar = output<Unidad>();
+  public editar = output<Area>();
+  public eliminar = output<Area>();
 }

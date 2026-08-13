@@ -49,6 +49,17 @@ export class DashboardService {
           route: '',
         },
         {
+          menuId: 2323,
+          menu: 'Áreas',
+          orden: 1,
+          icon: 'fas fa-mug-saucer',
+          url: '/mantenimiento/areas',
+          moduloId: 2070,
+          externo: false,
+          permisos: [],
+          route: '',
+        },
+        {
           menuId: 2311,
           menu: 'Estado asistencia',
           orden: 2,
