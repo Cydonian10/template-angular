@@ -1,11 +1,14 @@
-import { Component, inject, input, output } from '@angular/core';
+import { Component, effect, inject, input, output } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { FontIconService } from '../../../../../core/services/icon.service';
 import { Area } from '../../../../../core/interfaces/area.interface';
+import { PaginadorDataSource } from '../../../../../core/datasources/paginador-data-source';
+import PaginatorNg from '../../../../../shared/paginator/paginator.ng';
 
 @Component({
   selector: 'areas-table',
-  imports: [FontAwesomeModule],
+  imports: [FontAwesomeModule, PaginatorNg],
   template: `
     <div class="card bg-base-100 border border-base-300">
       <div class="card-body">
@@ -35,7 +38,7 @@ import { Area } from '../../../../../core/interfaces/area.interface';
                 </tr>
               </thead>
               <tbody>
-                @for (a of areas(); track a.areaId) {
+                @for (a of filas(); track a.areaId) {
                   <tr>
                     <td>{{ a.unidadNombre }}</td>
                     <td>{{ a.nombre }}</td>
@@ -63,6 +66,13 @@ import { Area } from '../../../../../core/interfaces/area.interface';
               </tbody>
             </table>
           </div>
+
+          <ng-paginator
+            [length]="dataSource.length"
+            [pageIndex]="dataSource.pageIndex"
+            [pageSize]="dataSource.pageSize"
+            (pageChange)="dataSource.paginar($event)"
+          />
         }
       </div>
     </div>
@@ -75,4 +85,13 @@ export default class AreasTable {
   public loading = input(false);
   public editar = output<Area>();
   public eliminar = output<Area>();
+
+  public dataSource = new PaginadorDataSource<Area>();
+  protected filas = toSignal(this.dataSource.connect(), {
+    initialValue: [] as Area[],
+  });
+
+  constructor() {
+    effect(() => this.dataSource.setData(this.areas()));
+  }
 }
