@@ -7,6 +7,7 @@ import {
   Area,
   CrearAreaDto,
   OperationResult,
+  OperationResultCreate,
 } from '../core/interfaces/area.interface';
 
 @Injectable({
@@ -28,8 +29,12 @@ export class AreasService {
     return this.#http.get<Area[]>(`${this.#base}/areas`, { params });
   }
 
-  crear(dto: CrearAreaDto): Observable<OperationResult> {
-    return this.#http.post<OperationResult>(`${this.#base}/areas`, dto);
+  obtenerPorId(id: number): Observable<Area> {
+    return this.#http.get<Area>(`${this.#base}/areas/${id}`);
+  }
+
+  crear(dto: CrearAreaDto): Observable<OperationResultCreate> {
+    return this.#http.post<OperationResultCreate>(`${this.#base}/areas`, dto);
   }
 
   actualizar(id: number, dto: ActualizarAreaDto): Observable<OperationResult> {

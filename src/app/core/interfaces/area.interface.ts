@@ -19,4 +19,8 @@ export interface ActualizarAreaDto {
   descripcion?: string;
 }
 
+export interface OperationResultCreate extends OperationResult {
+  Id: number | null;
+}
+
 export type { OperationResult };

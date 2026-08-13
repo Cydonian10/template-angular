@@ -124,24 +124,28 @@ export default class AreasPage {
     initialValue: [] as Unidad[],
   });
 
-  public areas = toSignal(
-    this.#busqueda$.pipe(
-      debounceTime(300),
-      tap(() => this.loadingAreas.set(true)),
-      switchMap((filtro) =>
-        this.#areasService
-          .listar(undefined, filtro.busqueda, filtro.tipo)
-          .pipe(
-            catchError(() => {
-              this.#toastr.error('No se pudieron cargar las áreas');
-              return of([] as Area[]);
-            }),
-          ),
-      ),
-      tap(() => this.loadingAreas.set(false)),
-    ),
-    { initialValue: [] as Area[] },
-  );
+  public areas = signal<Area[]>([]);
+
+  constructor() {
+    this.#busqueda$
+      .pipe(
+        debounceTime(300),
+        tap(() => this.loadingAreas.set(true)),
+        switchMap((filtro) =>
+          this.#areasService
+            .listar(undefined, filtro.busqueda, filtro.tipo)
+            .pipe(
+              catchError(() => {
+                this.#toastr.error('No se pudieron cargar las áreas');
+                return of([] as Area[]);
+              }),
+            ),
+        ),
+        tap(() => this.loadingAreas.set(false)),
+        takeUntilDestroyed(this.#destroyRef),
+      )
+      .subscribe((lista) => this.areas.set(lista));
+  }
 
   abrirNuevaArea(): void {
     this.abrirDialog(null);
@@ -190,7 +194,20 @@ export default class AreasPage {
       .pipe(
         takeUntilDestroyed(this.#destroyRef),
         tap((res) => this.procesarResultado(res)),
-        tap(() => this.recargar()),
+        switchMap((res) => {
+          if (res.State !== 1 || res.Id == null) {
+            return EMPTY;
+          }
+          return this.#areasService.obtenerPorId(res.Id).pipe(
+            tap((nueva) => {
+              if (this.coincideConFiltro(nueva)) {
+                this.areas.update((lista) => [nueva, ...lista]);
+              } else {
+                this.recargar();
+              }
+            }),
+          );
+        }),
         catchError(() => {
           this.#toastr.error('Error al crear el área');
           return EMPTY;
@@ -209,7 +226,22 @@ export default class AreasPage {
       .pipe(
         takeUntilDestroyed(this.#destroyRef),
         tap((res) => this.procesarResultado(res)),
-        tap(() => this.recargar()),
+        switchMap((res) => {
+          if (res.State !== 1) {
+            return EMPTY;
+          }
+          return this.#areasService.obtenerPorId(id).pipe(
+            tap((actualizada) => {
+              if (this.coincideConFiltro(actualizada)) {
+                this.areas.update((lista) =>
+                  lista.map((a) => (a.areaId === id ? actualizada : a)),
+                );
+              } else {
+                this.recargar();
+              }
+            }),
+          );
+        }),
         catchError(() => {
           this.#toastr.error('Error al actualizar el área');
           return EMPTY;
@@ -237,7 +269,13 @@ export default class AreasPage {
       .pipe(
         takeUntilDestroyed(this.#destroyRef),
         tap((res) => this.procesarResultado(res)),
-        tap(() => this.recargar()),
+        tap((res) => {
+          if (res.State === 1) {
+            this.areas.update((lista) =>
+              lista.filter((a) => a.areaId !== area.areaId),
+            );
+          }
+        }),
         catchError(() => {
           this.#toastr.error('Error al eliminar el área');
           return EMPTY;
@@ -262,6 +300,23 @@ export default class AreasPage {
     res.State === 1
       ? this.#toastr.success(res.Message)
       : this.#toastr.error(res.Message);
+  }
+
+  private coincideConFiltro(area: Area): boolean {
+    const filtro = this.#busqueda$.getValue();
+    if (filtro.busqueda) {
+      const q = filtro.busqueda.toLowerCase();
+      const coincide =
+        area.nombre.toLowerCase().includes(q) ||
+        area.descripcion?.toLowerCase().includes(q);
+      if (!coincide) {
+        return false;
+      }
+    }
+    if (filtro.tipo && area.unidadNombre !== filtro.tipo) {
+      return false;
+    }
+    return true;
   }
 
   private recargar(): void {
