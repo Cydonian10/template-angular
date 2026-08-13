@@ -16,10 +16,15 @@ export class AreasService {
   #http = inject(HttpClient);
   #base = environment.urlScap;
 
-  listar(unidadId?: number, busqueda?: string): Observable<Area[]> {
+  listar(
+    unidadId?: number,
+    busqueda?: string,
+    tipo?: string,
+  ): Observable<Area[]> {
     let params = new HttpParams();
     if (unidadId !== undefined) params = params.set('unidadId', unidadId);
     if (busqueda) params = params.set('busqueda', busqueda);
+    if (tipo) params = params.set('tipo', tipo);
     return this.#http.get<Area[]>(`${this.#base}/areas`, { params });
   }
 

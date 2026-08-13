@@ -71,19 +71,31 @@ import { DestroyRef } from '@angular/core';
         </div>
       }
 
-      <!-- ========== BÚSQUEDA ========== -->
-      <fieldset class="fieldset w-full max-w-sm">
-        <legend class="fieldset-legend">Buscar área</legend>
-        <label class="input input-bordered flex w-full items-center gap-2">
-          <fa-icon [icon]="iconService.faSearch"></fa-icon>
-          <input
-            type="search"
-            placeholder="Buscar por nombre o descripción..."
-            class="grow"
-            (input)="buscar($event)"
-          />
-        </label>
-      </fieldset>
+      <!-- ========== BÚSQUEDA Y FILTROS ========== -->
+      <div class="flex flex-wrap items-end gap-3">
+        <fieldset class="fieldset w-full max-w-sm">
+          <legend class="fieldset-legend">Buscar área</legend>
+          <label class="input flex w-full items-center gap-2">
+            <fa-icon [icon]="iconService.faSearch"></fa-icon>
+            <input
+              type="search"
+              placeholder="Buscar por nombre o descripción..."
+              class="grow"
+              (input)="buscar($event)"
+            />
+          </label>
+        </fieldset>
+
+        <fieldset class="fieldset w-full max-w-xs">
+          <legend class="fieldset-legend">Tipo de unidad</legend>
+          <select class="select w-full" (change)="cambiarTipo($event)">
+            <option value="">Todos</option>
+            @for (u of tiposUnidad(); track u.unidadId) {
+              <option [value]="u.nombre ?? ''">{{ u.nombre }}</option>
+            }
+          </select>
+        </fieldset>
+      </div>
 
       <!-- ========== LISTADO DE ÁREAS ========== -->
       <areas-table
@@ -106,19 +118,25 @@ export default class AreasPage {
   public loadingAreas = signal(false);
   public confirmarEliminar = signal<Area | null>(null);
 
-  #busqueda$ = new BehaviorSubject<string | undefined>(undefined);
+  #busqueda$ = new BehaviorSubject<AreasFiltro>({});
+
+  public tiposUnidad = toSignal(this.#unidadesService.listar(), {
+    initialValue: [] as Unidad[],
+  });
 
   public areas = toSignal(
     this.#busqueda$.pipe(
       debounceTime(300),
       tap(() => this.loadingAreas.set(true)),
-      switchMap((busqueda) =>
-        this.#areasService.listar(undefined, busqueda).pipe(
-          catchError(() => {
-            this.#toastr.error('No se pudieron cargar las áreas');
-            return of([] as Area[]);
-          }),
-        ),
+      switchMap((filtro) =>
+        this.#areasService
+          .listar(undefined, filtro.busqueda, filtro.tipo)
+          .pipe(
+            catchError(() => {
+              this.#toastr.error('No se pudieron cargar las áreas');
+              return of([] as Area[]);
+            }),
+          ),
       ),
       tap(() => this.loadingAreas.set(false)),
     ),
@@ -230,7 +248,14 @@ export default class AreasPage {
 
   buscar(event: Event): void {
     const value = (event.target as HTMLInputElement).value.trim();
-    this.#busqueda$.next(value || undefined);
+    const current = this.#busqueda$.getValue();
+    this.#busqueda$.next({ ...current, busqueda: value || undefined });
+  }
+
+  cambiarTipo(event: Event): void {
+    const value = (event.target as HTMLSelectElement).value;
+    const current = this.#busqueda$.getValue();
+    this.#busqueda$.next({ ...current, tipo: value || undefined });
   }
 
   private procesarResultado(res: OperationResult): void {
@@ -240,6 +265,11 @@ export default class AreasPage {
   }
 
   private recargar(): void {
-    this.#busqueda$.next(this.#busqueda$.getValue());
+    this.#busqueda$.next({ ...this.#busqueda$.getValue() });
   }
+}
+
+interface AreasFiltro {
+  busqueda?: string;
+  tipo?: string;
 }

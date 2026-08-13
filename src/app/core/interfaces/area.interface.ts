@@ -3,6 +3,7 @@ import { OperationResult } from './unidad.interface';
 export interface Area {
   areaId: number;
   unidadId: number;
+  unidadNombre?: string | null;
   nombre: string;
   descripcion: string | null;
 }

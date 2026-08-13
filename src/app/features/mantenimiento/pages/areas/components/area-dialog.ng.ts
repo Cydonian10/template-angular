@@ -27,7 +27,7 @@ export interface AreaDialogResult {
 
         @if (data.area) {
           <p class="text-sm text-base-content/70">
-            Unidad: <strong>{{ data.area.unidadId }}</strong>
+            Unidad: <strong>{{ data.area.unidadNombre }}</strong>
           </p>
         }
 

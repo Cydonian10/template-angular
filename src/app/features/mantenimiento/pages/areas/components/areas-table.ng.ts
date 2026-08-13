@@ -37,7 +37,7 @@ import { Area } from '../../../../../core/interfaces/area.interface';
               <tbody>
                 @for (a of areas(); track a.areaId) {
                   <tr>
-                    <td>{{ a.unidadId }}</td>
+                    <td>{{ a.unidadNombre }}</td>
                     <td>{{ a.nombre }}</td>
                     <td>{{ a.descripcion }}</td>
                     <td class="text-end">
