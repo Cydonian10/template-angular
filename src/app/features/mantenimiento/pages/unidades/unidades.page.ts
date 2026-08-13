@@ -79,17 +79,18 @@ import { DestroyRef } from '@angular/core';
       }
 
       <!-- ========== BÚSQUEDA ========== -->
-      <label
-        class="input input-bordered flex w-full max-w-sm items-center gap-2"
-      >
-        <fa-icon [icon]="iconService.faSearch"></fa-icon>
-        <input
-          type="search"
-          placeholder="Buscar por código o nombre..."
-          class="grow"
-          (input)="buscar($event)"
-        />
-      </label>
+      <fieldset class="fieldset w-full max-w-sm">
+        <legend class="fieldset-legend">Buscar unidad</legend>
+        <label class="input flex w-full items-center gap-2">
+          <fa-icon [icon]="iconService.faSearch"></fa-icon>
+          <input
+            type="search"
+            placeholder="Buscar por código o nombre..."
+            class="grow"
+            (input)="buscar($event)"
+          />
+        </label>
+      </fieldset>
 
       <!-- ========== UNIDADES MIGRADAS ========== -->
       <unidades-table
@@ -160,6 +161,7 @@ export default class UnidadesPage {
       {
         data: this.sync(),
         disableClose: true,
+        width: '720px',
       },
     );
     ref.closed
@@ -175,6 +177,7 @@ export default class UnidadesPage {
     const ref = this.#dialog.open<EditarHorasResult>(EditarHorasDialog, {
       data: unidad,
       disableClose: true,
+      width: '480px',
     });
     ref.closed
       .pipe(takeUntilDestroyed(this.#destroyRef))

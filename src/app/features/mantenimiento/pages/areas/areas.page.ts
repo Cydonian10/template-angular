@@ -56,7 +56,8 @@ import { DestroyRef } from '@angular/core';
             <h3 class="text-lg font-bold">Eliminar área</h3>
             <p class="py-4">
               ¿Seguro que deseas eliminar
-              <strong>{{ a.nombre }}</strong>?
+              <strong>{{ a.nombre }}</strong
+              >?
             </p>
             <div class="modal-action">
               <button class="btn btn-ghost" (click)="cancelarEliminar()">
@@ -73,9 +74,7 @@ import { DestroyRef } from '@angular/core';
       <!-- ========== BÚSQUEDA ========== -->
       <fieldset class="fieldset w-full max-w-sm">
         <legend class="fieldset-legend">Buscar área</legend>
-        <label
-          class="input input-bordered flex w-full items-center gap-2"
-        >
+        <label class="input input-bordered flex w-full items-center gap-2">
           <fa-icon [icon]="iconService.faSearch"></fa-icon>
           <input
             type="search"
@@ -146,6 +145,7 @@ export default class AreasPage {
     const ref = this.#dialog.open<AreaDialogResult>(AreaDialog, {
       data: { area, unidades } as AreaDialogData,
       disableClose: true,
+      width: '500px',
     });
     ref.closed
       .pipe(takeUntilDestroyed(this.#destroyRef))

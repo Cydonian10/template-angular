@@ -22,41 +22,40 @@ export interface EditarHorasResult {
         </p>
 
         <form [formGroup]="form" (ngSubmit)="guardar()" class="space-y-4">
-          <div class="flex gap-4 flex-col">
-            <label class="form-control w-full">
-              <span class="label-text mb-1">Horas laborales diarias</span>
-              <input
-                type="number"
-                min="0"
-                class="input input-bordered w-full"
-                formControlName="horasLaborales"
-              />
-              @if (horasLaborales.invalid && horasLaborales.touched) {
-                <span class="text-error text-xs mt-1">
-                  Debe ser un número mayor o igual a 0.
-                </span>
-              }
-            </label>
+          <fieldset class="fieldset">
+            <legend class="fieldset-legend">Horas laborales diarias</legend>
+            <input
+              type="number"
+              min="0"
+              class="input w-full"
+              formControlName="horasLaborales"
+            />
+            @if (horasLaborales.invalid && horasLaborales.touched) {
+              <span class="text-error text-xs mt-1">
+                Debe ser un número mayor o igual a 0.
+              </span>
+            }
+          </fieldset>
 
-            <label class="form-control w-full">
-              <span class="label-text mb-1"
-                >Horas laborales totales (semanales)</span
-              >
-              <input
-                type="number"
-                min="0"
-                class="input input-bordered w-full"
-                formControlName="horasLaboralesTotales"
-              />
-              @if (
-                horasLaboralesTotales.invalid && horasLaboralesTotales.touched
-              ) {
-                <span class="text-error text-xs mt-1">
-                  Debe ser un número mayor o igual a 0.
-                </span>
-              }
-            </label>
-          </div>
+          <fieldset class="fieldset">
+            <legend class="fieldset-legend"
+              >Horas laborales totales (semanales)</legend
+            >
+            <input
+              type="number"
+              min="0"
+              class="input w-full"
+              formControlName="horasLaboralesTotales"
+            />
+            @if (
+              horasLaboralesTotales.invalid && horasLaboralesTotales.touched
+            ) {
+              <span class="text-error text-xs mt-1">
+                Debe ser un número mayor o igual a 0.
+              </span>
+            }
+          </fieldset>
+
           <div class="card-actions justify-end pt-2">
             <button type="button" class="btn btn-ghost" (click)="cancelar()">
               Cancelar

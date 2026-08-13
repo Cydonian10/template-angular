@@ -19,9 +19,7 @@ export interface AreaDialogResult {
   selector: 'area-dialog',
   imports: [ReactiveFormsModule],
   template: `
-    <div
-      class="card bg-base-100 w-full max-w-md border border-base-300 shadow-xl"
-    >
+    <div class="card bg-base-100 w-full  border border-base-300 shadow-xl">
       <div class="card-body gap-4">
         <h2 class="card-title">
           {{ data.area ? 'Editar área' : 'Nueva área' }}
@@ -34,15 +32,10 @@ export interface AreaDialogResult {
         }
 
         <form [formGroup]="form" (ngSubmit)="guardar()" class="space-y-4">
-          <fieldset class="fieldset">
-            <legend class="fieldset-legend">Datos del área</legend>
           @if (!data.area) {
-            <label class="form-control w-full">
-              <span class="label-text mb-1">Unidad</span>
-              <select
-                class="select select-bordered w-full"
-                formControlName="unidadId"
-              >
+            <fieldset class="fieldset">
+              <legend class="fieldset-legend">Unidad</legend>
+              <select class="select w-full" formControlName="unidadId">
                 <option [ngValue]="null" disabled>Selecciona una unidad</option>
                 @for (u of data.unidades; track u.unidadId) {
                   <option [ngValue]="u.unidadId">
@@ -55,14 +48,14 @@ export interface AreaDialogResult {
                   La unidad es requerida.
                 </span>
               }
-            </label>
+            </fieldset>
           }
 
-          <label class="form-control w-full">
-            <span class="label-text mb-1">Nombre</span>
+          <fieldset class="fieldset">
+            <legend class="fieldset-legend">Nombre</legend>
             <input
               type="text"
-              class="input input-bordered w-full"
+              class="input w-full"
               formControlName="nombre"
               placeholder="Ej: Producción"
             />
@@ -71,18 +64,17 @@ export interface AreaDialogResult {
                 El nombre es requerido.
               </span>
             }
-          </label>
+          </fieldset>
 
-          <label class="form-control w-full">
-            <span class="label-text mb-1">Descripción</span>
+          <fieldset class="fieldset">
+            <legend class="fieldset-legend">Descripción</legend>
             <textarea
-              class="textarea textarea-bordered w-full"
+              class="textarea w-full"
               rows="3"
               formControlName="descripcion"
-              placeholder="Opcional"
+              placeholder="Describe el área..."
             ></textarea>
-          </label>
-
+            <p class="label">Opcional</p>
           </fieldset>
 
           <div class="card-actions justify-end pt-2">
