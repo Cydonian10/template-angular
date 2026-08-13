@@ -33,6 +33,22 @@ const mantenimientoRoutes: Routes = [
     data: { breadcrumb: 'Áreas' },
     loadComponent: () => import('./pages/areas/areas.page'),
   },
+  {
+    path: 'usuarios',
+    data: { breadcrumb: 'Usuarios' },
+    children: [
+      {
+        path: '',
+        data: { breadcrumb: '' },
+        loadComponent: () => import('./pages/usuarios/usuarios.page'),
+      },
+      {
+        path: 'agregar',
+        data: { breadcrumb: 'Agregar usuarios' },
+        loadComponent: () => import('./pages/usuarios/agregar-usuarios.page'),
+      },
+    ],
+  },
 ];
 
 export default mantenimientoRoutes;

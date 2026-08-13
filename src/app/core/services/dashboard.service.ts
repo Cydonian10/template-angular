@@ -70,6 +70,17 @@ export class DashboardService {
           permisos: [],
           route: '',
         },
+        {
+          menuId: 2330,
+          menu: 'Usuarios',
+          orden: 3,
+          icon: 'fas fa-mug-saucer',
+          url: '/mantenimiento/usuarios',
+          moduloId: 2070,
+          externo: false,
+          permisos: [],
+          route: '',
+        },
       ],
     },
     {
