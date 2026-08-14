@@ -1,7 +1,7 @@
 import { Component, computed, DestroyRef, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { EMPTY, catchError, finalize, firstValueFrom, tap } from 'rxjs';
 import { ToastrService } from 'ngx-toastr';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
@@ -11,6 +11,7 @@ import { Area } from '../../../../core/interfaces/area.interface';
 import {
   Dia,
   DiaInput,
+  GrupoVigenciaInput,
   OperationResult,
   OperationResultCreate,
   TurnoInput,
@@ -26,8 +27,6 @@ interface DiaEdicion {
   diaId: number;
   nombre: string;
   incluido: boolean;
-  vigenciaInicio?: string;
-  vigenciaFin?: string;
   turnos: TurnoInput[];
 }
 
@@ -35,6 +34,13 @@ interface TurnoGrupal {
   horaInicio: string;
   horaFin: string;
   extendido: boolean;
+}
+
+interface GrupoVigenciaEdicion {
+  fechaInicio: string;
+  fechaFin?: string;
+  turnoGrupal: TurnoGrupal;
+  dias: DiaEdicion[];
 }
 
 @Component({
@@ -172,195 +178,390 @@ interface TurnoGrupal {
           </div>
 
           @if (!esEdicion()) {
-            <!-- ========== TURNO GRUPAL ========== -->
-            <div class="card bg-base-100 border border-base-300">
-              <div class="card-body gap-3">
-                <h2 class="card-title">Turno grupal</h2>
-
-                <div class="flex flex-wrap items-end gap-2">
-                  <label class="label">Hora inicio</label>
-                  <input
-                    type="time"
-                    class="input input-sm w-28"
-                    [value]="turnoGrupal().horaInicio"
-                    (change)="turnoGrupalCampo('horaInicio', $event)"
-                  />
-                  <label class="label">Hora fin</label>
-                  <input
-                    type="time"
-                    class="input input-sm w-28"
-                    [value]="turnoGrupal().horaFin"
-                    (change)="turnoGrupalCampo('horaFin', $event)"
-                  />
-                  <label class="flex items-center gap-1 text-sm">
-                    <input
-                      type="checkbox"
-                      class="checkbox checkbox-sm"
-                      [checked]="turnoGrupal().extendido"
-                      (change)="turnoGrupalCampo('extendido', $event)"
-                    />
-                    Extendido
-                  </label>
-                </div>
-
-                <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
-                  <span class="text-xs font-medium">Días:</span>
-                  @for (d of dias(); track d.diaId) {
-                    <label class="flex items-center gap-1 text-xs">
-                      <input
-                        type="checkbox"
-                        class="checkbox checkbox-xs"
-                        [checked]="turnoGrupalDias().has(d.diaId)"
-                        (change)="toggleDiaGrupal(d.diaId)"
-                      />
-                      {{ d.nombre }}
-                    </label>
-                  }
-                  <button
-                    type="button"
-                    class="btn btn-xs btn-ghost"
-                    (click)="seleccionarTodosDiasGrupales()"
+            @if (rotativo()) {
+              <!-- ========== GRUPOS DE VIGENCIA (ROTATIVO) ========== -->
+              <div class="card bg-base-100 border border-base-300">
+                <div class="card-body gap-4">
+                  <div
+                    class="flex flex-wrap items-center justify-between gap-3"
                   >
-                    Todos
-                  </button>
-                  <button
-                    type="button"
-                    class="btn btn-xs btn-ghost"
-                    (click)="limpiarDiasGrupales()"
-                  >
-                    Ninguno
-                  </button>
-                </div>
-
-                <button
-                  type="button"
-                  class="btn btn-sm btn-primary w-fit"
-                  [disabled]="!turnoGrupalValido()"
-                  (click)="aplicarTurnoGrupal()"
-                >
-                  <fa-icon [icon]="iconService.faCheck"></fa-icon>
-                  Aplicar turno a los días seleccionados
-                </button>
-              </div>
-            </div>
-
-            <!-- ========== GRÁFICA DE DÍAS Y TURNOS ========== -->
-            <div class="card bg-base-100 border border-base-300">
-              <div class="card-body gap-3">
-                <h2 class="card-title">Días y turnos</h2>
-
-                <div
-                  class="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7"
-                >
-                  @for (d of dias(); track d.diaId) {
-                    <div
-                      class="rounded-lg border bg-base-100 p-2"
-                      [class.border-primary]="d.incluido"
-                      [class.border-base-300]="!d.incluido"
+                    <h2 class="card-title">Grupos de vigencia</h2>
+                    <button
+                      type="button"
+                      class="btn btn-sm btn-outline"
+                      (click)="agregarGrupo()"
                     >
-                      <label
-                        class="flex items-center justify-between gap-1 font-medium text-sm"
-                      >
-                        {{ d.nombre }}
+                      <fa-icon [icon]="iconService.faPlus"></fa-icon>
+                      Agregar grupo
+                    </button>
+                  </div>
+                  <p class="text-sm text-base-content/60">
+                    Cada grupo tiene su rango de fechas y sus propios días con
+                    turnos. Un mismo día puede repetirse en varios grupos.
+                  </p>
+
+                  @for (g of grupos(); track $index; let gi = $index) {
+                    <div
+                      class="rounded-lg border border-base-300 bg-base-100 p-3"
+                    >
+                      <div class="flex flex-wrap items-center gap-2">
+                        <span class="font-semibold text-sm">
+                          Grupo {{ gi + 1 }}
+                        </span>
                         <input
-                          type="checkbox"
-                          class="checkbox checkbox-xs"
-                          [checked]="d.incluido"
-                          (change)="toggleDia(d.diaId)"
+                          type="date"
+                          class="input input-xs w-40"
+                          [value]="g.fechaInicio"
+                          (change)="grupoCampo(gi, 'inicio', $event)"
                         />
-                      </label>
-
-                      @if (d.incluido) {
-                        @if (form.value.rotativo) {
-                          <div class="mt-1 space-y-1">
-                            <input
-                              type="date"
-                              class="input input-xs w-full"
-                              [value]="d.vigenciaInicio ?? ''"
-                              (change)="vigenciaDia(d.diaId, 'inicio', $event)"
-                            />
-                            <input
-                              type="date"
-                              class="input input-xs w-full"
-                              [value]="d.vigenciaFin ?? ''"
-                              (change)="vigenciaDia(d.diaId, 'fin', $event)"
-                            />
-                          </div>
-                        }
-
-                        @for (t of d.turnos; track $index) {
-                          <div class="mt-1 space-y-1 rounded bg-base-200 p-1.5">
-                            <input
-                              type="time"
-                              class="input input-xs w-full"
-                              [value]="t.horaInicio"
-                              (change)="
-                                turnoCampo(
-                                  d.diaId,
-                                  $index,
-                                  'horaInicio',
-                                  $event
-                                )
-                              "
-                            />
-                            <input
-                              type="time"
-                              class="input input-xs w-full"
-                              [value]="t.horaFin"
-                              (change)="
-                                turnoCampo(d.diaId, $index, 'horaFin', $event)
-                              "
-                            />
-                            <div class="flex items-center justify-between">
-                              <label
-                                class="flex items-center gap-1 text-[10px]"
-                              >
-                                <input
-                                  type="checkbox"
-                                  class="checkbox checkbox-xs"
-                                  [checked]="t.extendido"
-                                  (change)="
-                                    turnoCampo(
-                                      d.diaId,
-                                      $index,
-                                      'extendido',
-                                      $event
-                                    )
-                                  "
-                                />
-                                Ext
-                              </label>
-                              <button
-                                type="button"
-                                class="btn btn-xs btn-ghost btn-error px-1"
-                                (click)="quitarTurno(d.diaId, $index)"
-                              >
-                                <fa-icon [icon]="iconService.faTrash"></fa-icon>
-                              </button>
-                            </div>
-                          </div>
-                        }
-
+                        <span class="text-xs">a</span>
+                        <input
+                          type="date"
+                          class="input input-xs w-40"
+                          [value]="g.fechaFin ?? ''"
+                          (change)="grupoCampo(gi, 'fin', $event)"
+                        />
                         <button
                           type="button"
-                          class="btn btn-xs btn-outline mt-1 w-full"
-                          (click)="agregarTurno(d.diaId)"
+                          class="btn btn-xs btn-ghost btn-error"
+                          (click)="quitarGrupo(gi)"
                         >
-                          <fa-icon [icon]="iconService.faPlus"></fa-icon>
-                          Turno
+                          <fa-icon [icon]="iconService.faTrash"></fa-icon>
                         </button>
-                      } @else {
-                        <p
-                          class="mt-2 text-center text-xs text-base-content/40"
+                      </div>
+
+                      <!-- Turno grupal del grupo -->
+                      <div class="mt-3 flex flex-wrap items-end gap-2">
+                        <span class="text-xs font-medium">Turno grupal:</span>
+                        <input
+                          type="time"
+                          class="input input-xs w-24"
+                          [value]="g.turnoGrupal.horaInicio"
+                          (change)="grupoTurnoGrupal(gi, 'horaInicio', $event)"
+                        />
+                        <span class="text-xs">a</span>
+                        <input
+                          type="time"
+                          class="input input-xs w-24"
+                          [value]="g.turnoGrupal.horaFin"
+                          (change)="grupoTurnoGrupal(gi, 'horaFin', $event)"
+                        />
+                        <label class="flex items-center gap-1 text-xs">
+                          <input
+                            type="checkbox"
+                            class="checkbox checkbox-xs"
+                            [checked]="g.turnoGrupal.extendido"
+                            (change)="grupoTurnoGrupal(gi, 'extendido', $event)"
+                          />
+                          Extendido
+                        </label>
+                        <button
+                          type="button"
+                          class="btn btn-xs btn-outline"
+                          [disabled]="!grupoTurnoGrupalValido(gi)"
+                          (click)="aplicarTurnoGrupalGrupo(gi)"
                         >
-                          —
-                        </p>
-                      }
+                          <fa-icon [icon]="iconService.faCheck"></fa-icon>
+                          Aplicar a días
+                        </button>
+                      </div>
+
+                      <!-- Grilla de días del grupo -->
+                      <div
+                        class="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-7"
+                      >
+                        @for (d of g.dias; track d.diaId) {
+                          <div
+                            class="rounded-lg border bg-base-200/50 p-2"
+                            [class.border-primary]="d.incluido"
+                            [class.border-base-300]="!d.incluido"
+                          >
+                            <label
+                              class="flex items-center justify-between gap-1 font-medium text-sm"
+                            >
+                              {{ d.nombre }}
+                              <input
+                                type="checkbox"
+                                class="checkbox checkbox-xs"
+                                [checked]="d.incluido"
+                                (change)="toggleDiaGrupo(gi, d.diaId)"
+                              />
+                            </label>
+
+                            @if (d.incluido) {
+                              @for (
+                                t of d.turnos;
+                                track $index;
+                                let ti = $index
+                              ) {
+                                <div
+                                  class="mt-1 space-y-1 rounded bg-base-100 p-1.5"
+                                >
+                                  <input
+                                    type="time"
+                                    class="input input-xs w-full"
+                                    [value]="t.horaInicio"
+                                    (change)="
+                                      turnoGrupoCampo(
+                                        gi,
+                                        d.diaId,
+                                        ti,
+                                        'horaInicio',
+                                        $event
+                                      )
+                                    "
+                                  />
+                                  <input
+                                    type="time"
+                                    class="input input-xs w-full"
+                                    [value]="t.horaFin"
+                                    (change)="
+                                      turnoGrupoCampo(
+                                        gi,
+                                        d.diaId,
+                                        ti,
+                                        'horaFin',
+                                        $event
+                                      )
+                                    "
+                                  />
+                                  <div
+                                    class="flex items-center justify-between"
+                                  >
+                                    <label
+                                      class="flex items-center gap-1 text-[10px]"
+                                    >
+                                      <input
+                                        type="checkbox"
+                                        class="checkbox checkbox-xs"
+                                        [checked]="t.extendido"
+                                        (change)="
+                                          turnoGrupoCampo(
+                                            gi,
+                                            d.diaId,
+                                            ti,
+                                            'extendido',
+                                            $event
+                                          )
+                                        "
+                                      />
+                                      Ext
+                                    </label>
+                                    <button
+                                      type="button"
+                                      class="btn btn-xs btn-ghost btn-error px-1"
+                                      (click)="
+                                        quitarTurnoGrupo(gi, d.diaId, ti)
+                                      "
+                                    >
+                                      <fa-icon
+                                        [icon]="iconService.faTrash"
+                                      ></fa-icon>
+                                    </button>
+                                  </div>
+                                </div>
+                              }
+
+                              <button
+                                type="button"
+                                class="btn btn-xs btn-outline mt-1 w-full"
+                                (click)="agregarTurnoGrupo(gi, d.diaId)"
+                              >
+                                <fa-icon [icon]="iconService.faPlus"></fa-icon>
+                                Turno
+                              </button>
+                            } @else {
+                              <p
+                                class="mt-2 text-center text-xs text-base-content/40"
+                              >
+                                —
+                              </p>
+                            }
+                          </div>
+                        }
+                      </div>
                     </div>
                   }
                 </div>
               </div>
-            </div>
+            } @else {
+              <!-- ========== TURNO GRUPAL (NO ROTATIVO) ========== -->
+              <div class="card bg-base-100 border border-base-300">
+                <div class="card-body gap-3">
+                  <h2 class="card-title">Turno grupal</h2>
+
+                  <div class="flex flex-wrap items-end gap-2">
+                    <label class="label">Hora inicio</label>
+                    <input
+                      type="time"
+                      class="input input-sm w-28"
+                      [value]="turnoGrupal().horaInicio"
+                      (change)="turnoGrupalCampo('horaInicio', $event)"
+                    />
+                    <label class="label">Hora fin</label>
+                    <input
+                      type="time"
+                      class="input input-sm w-28"
+                      [value]="turnoGrupal().horaFin"
+                      (change)="turnoGrupalCampo('horaFin', $event)"
+                    />
+                    <label class="flex items-center gap-1 text-sm">
+                      <input
+                        type="checkbox"
+                        class="checkbox checkbox-sm"
+                        [checked]="turnoGrupal().extendido"
+                        (change)="turnoGrupalCampo('extendido', $event)"
+                      />
+                      Extendido
+                    </label>
+                  </div>
+
+                  <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
+                    <span class="text-xs font-medium">Días:</span>
+                    @for (d of dias(); track d.diaId) {
+                      <label class="flex items-center gap-1 text-xs">
+                        <input
+                          type="checkbox"
+                          class="checkbox checkbox-xs"
+                          [checked]="turnoGrupalDias().has(d.diaId)"
+                          (change)="toggleDiaGrupal(d.diaId)"
+                        />
+                        {{ d.nombre }}
+                      </label>
+                    }
+                    <button
+                      type="button"
+                      class="btn btn-xs btn-ghost"
+                      (click)="seleccionarTodosDiasGrupales()"
+                    >
+                      Todos
+                    </button>
+                    <button
+                      type="button"
+                      class="btn btn-xs btn-ghost"
+                      (click)="limpiarDiasGrupales()"
+                    >
+                      Ninguno
+                    </button>
+                  </div>
+
+                  <button
+                    type="button"
+                    class="btn btn-sm btn-primary w-fit"
+                    [disabled]="!turnoGrupalValido()"
+                    (click)="aplicarTurnoGrupal()"
+                  >
+                    <fa-icon [icon]="iconService.faCheck"></fa-icon>
+                    Aplicar turno a los días seleccionados
+                  </button>
+                </div>
+              </div>
+
+              <!-- ========== GRÁFICA DE DÍAS Y TURNOS (NO ROTATIVO) ========== -->
+              <div class="card bg-base-100 border border-base-300">
+                <div class="card-body gap-3">
+                  <h2 class="card-title">Días y turnos</h2>
+
+                  <div
+                    class="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7"
+                  >
+                    @for (d of dias(); track d.diaId) {
+                      <div
+                        class="rounded-lg border bg-base-100 p-2"
+                        [class.border-primary]="d.incluido"
+                        [class.border-base-300]="!d.incluido"
+                      >
+                        <label
+                          class="flex items-center justify-between gap-1 font-medium text-sm"
+                        >
+                          {{ d.nombre }}
+                          <input
+                            type="checkbox"
+                            class="checkbox checkbox-xs"
+                            [checked]="d.incluido"
+                            (change)="toggleDia(d.diaId)"
+                          />
+                        </label>
+
+                        @if (d.incluido) {
+                          @for (t of d.turnos; track $index) {
+                            <div
+                              class="mt-1 space-y-1 rounded bg-base-200 p-1.5"
+                            >
+                              <input
+                                type="time"
+                                class="input input-xs w-full"
+                                [value]="t.horaInicio"
+                                (change)="
+                                  turnoCampo(
+                                    d.diaId,
+                                    $index,
+                                    'horaInicio',
+                                    $event
+                                  )
+                                "
+                              />
+                              <input
+                                type="time"
+                                class="input input-xs w-full"
+                                [value]="t.horaFin"
+                                (change)="
+                                  turnoCampo(d.diaId, $index, 'horaFin', $event)
+                                "
+                              />
+                              <div class="flex items-center justify-between">
+                                <label
+                                  class="flex items-center gap-1 text-[10px]"
+                                >
+                                  <input
+                                    type="checkbox"
+                                    class="checkbox checkbox-xs"
+                                    [checked]="t.extendido"
+                                    (change)="
+                                      turnoCampo(
+                                        d.diaId,
+                                        $index,
+                                        'extendido',
+                                        $event
+                                      )
+                                    "
+                                  />
+                                  Ext
+                                </label>
+                                <button
+                                  type="button"
+                                  class="btn btn-xs btn-ghost btn-error px-1"
+                                  (click)="quitarTurno(d.diaId, $index)"
+                                >
+                                  <fa-icon
+                                    [icon]="iconService.faTrash"
+                                  ></fa-icon>
+                                </button>
+                              </div>
+                            </div>
+                          }
+
+                          <button
+                            type="button"
+                            class="btn btn-xs btn-outline mt-1 w-full"
+                            (click)="agregarTurno(d.diaId)"
+                          >
+                            <fa-icon [icon]="iconService.faPlus"></fa-icon>
+                            Turno
+                          </button>
+                        } @else {
+                          <p
+                            class="mt-2 text-center text-xs text-base-content/40"
+                          >
+                            —
+                          </p>
+                        }
+                      </div>
+                    }
+                  </div>
+                </div>
+              </div>
+            }
 
             <!-- ========== ASIGNACIÓN DE USUARIOS ========== -->
             <div class="card bg-base-100 border border-base-300">
@@ -421,10 +622,16 @@ interface TurnoGrupal {
             <button type="button" class="btn btn-ghost" (click)="volver()">
               Cancelar
             </button>
+
             <button
               type="submit"
+              [disabled]="
+                form.invalid ||
+                !diasValidos() ||
+                !gruposValidos() ||
+                guardando()
+              "
               class="btn btn-primary"
-              [disabled]="form.invalid || !diasValidos() || guardando()"
             >
               @if (guardando()) {
                 <fa-icon
@@ -435,6 +642,10 @@ interface TurnoGrupal {
               {{ esEdicion() ? 'Guardar cambios' : 'Crear horario' }}
             </button>
           </div>
+
+          @if (motivoBloqueo()) {
+            <p class="text-right text-xs text-error">{{ motivoBloqueo() }}</p>
+          }
         </form>
       }
     </div>
@@ -471,6 +682,7 @@ export default class HorarioFormPage {
     extendido: false,
   });
   public turnoGrupalDias = signal<Set<number>>(new Set());
+  public grupos = signal<GrupoVigenciaEdicion[]>([]);
 
   public turnoGrupalValido = computed(
     () =>
@@ -478,6 +690,36 @@ export default class HorarioFormPage {
       !!this.turnoGrupal().horaFin &&
       this.turnoGrupalDias().size > 0,
   );
+
+  public gruposValidos = computed(() => {
+    if (this.esEdicion()) {
+      return true;
+    }
+    if (!this.rotativo()) {
+      return true;
+    }
+    const lista = this.grupos();
+    if (!lista.length) {
+      return false;
+    }
+    return lista.every((g) => {
+      if (!g.fechaInicio) {
+        return false;
+      }
+      if (g.fechaFin && g.fechaFin < g.fechaInicio) {
+        return false;
+      }
+      const activos = g.dias.filter((d) => d.incluido);
+      if (!activos.length) {
+        return false;
+      }
+      return activos.every(
+        (d) =>
+          d.turnos.length > 0 &&
+          d.turnos.every((t) => t.horaInicio && t.horaFin),
+      );
+    });
+  });
 
   public form = this.#fb.group({
     nombre: ['', [Validators.required, Validators.minLength(1)]],
@@ -489,8 +731,12 @@ export default class HorarioFormPage {
     horasLaborales: [8, [Validators.required, Validators.min(1)]],
   });
 
+  public rotativo = toSignal(this.form.controls.rotativo.valueChanges, {
+    initialValue: this.form.controls.rotativo.value,
+  });
+
   public diasValidos = computed(() => {
-    if (this.esEdicion()) {
+    if (this.esEdicion() || this.rotativo()) {
       return true;
     }
     const activos = this.dias().filter((d) => d.incluido);
@@ -498,16 +744,79 @@ export default class HorarioFormPage {
       return false;
     }
     return activos.every((d) => {
-      const turnosOk =
-        d.turnos.length > 0 && d.turnos.every((t) => t.horaInicio && t.horaFin);
-      if (!turnosOk) {
-        return false;
-      }
-      if (this.form.value.rotativo) {
-        return !!d.vigenciaInicio;
-      }
-      return true;
+      return (
+        d.turnos.length > 0 && d.turnos.every((t) => t.horaInicio && t.horaFin)
+      );
     });
+  });
+
+  public motivoBloqueo = computed(() => {
+    if (this.guardando()) {
+      return null;
+    }
+    if (this.form.invalid) {
+      if (this.nombre.invalid) {
+        return 'Falta el nombre del horario.';
+      }
+      if (this.unidadId.invalid) {
+        return 'Falta seleccionar la unidad.';
+      }
+      if (this.areaId.invalid) {
+        return 'Falta seleccionar el área.';
+      }
+      if (this.form.controls.horasLaborales.invalid) {
+        return 'Las horas laborales deben ser mayor o igual a 1.';
+      }
+    }
+    if (this.esEdicion()) {
+      return null;
+    }
+    if (this.rotativo()) {
+      const lista = this.grupos();
+      if (!lista.length) {
+        return 'Agrega al menos un grupo de vigencia.';
+      }
+      for (let i = 0; i < lista.length; i++) {
+        const g = lista[i];
+        const etiqueta = `Grupo ${i + 1}`;
+        if (!g.fechaInicio) {
+          return `${etiqueta}: falta la fecha de inicio.`;
+        }
+        if (g.fechaFin && g.fechaFin < g.fechaInicio) {
+          return `${etiqueta}: la fecha fin es anterior a la de inicio.`;
+        }
+        const activos = g.dias.filter((d) => d.incluido);
+        if (!activos.length) {
+          return `${etiqueta}: incluye al menos un día.`;
+        }
+        for (const d of activos) {
+          if (!d.turnos.length) {
+            return `${etiqueta}, día ${d.nombre}: agrega al menos un turno.`;
+          }
+          for (const t of d.turnos) {
+            if (!t.horaInicio || !t.horaFin) {
+              return `${etiqueta}, día ${d.nombre}: un turno tiene hora incompleta.`;
+            }
+          }
+        }
+      }
+      return null;
+    }
+    const activos = this.dias().filter((d) => d.incluido);
+    if (!activos.length) {
+      return 'Incluye al menos un día con turnos.';
+    }
+    for (const d of activos) {
+      if (!d.turnos.length) {
+        return `Día ${d.nombre}: agrega al menos un turno.`;
+      }
+      for (const t of d.turnos) {
+        if (!t.horaInicio || !t.horaFin) {
+          return `Día ${d.nombre}: un turno tiene hora incompleta.`;
+        }
+      }
+    }
+    return null;
   });
 
   get nombre() {
@@ -567,15 +876,17 @@ export default class HorarioFormPage {
         finalize(() => this.cargando.set(false)),
       )
       .subscribe({
-        next: (dias) =>
-          this.dias.set(
-            dias.map((d: Dia) => ({
-              diaId: d.diaId,
-              nombre: d.nombre,
-              incluido: false,
-              turnos: [] as TurnoInput[],
-            })),
-          ),
+        next: (dias) => {
+          this.dias.set(this.#crearDiaEdicion(dias));
+          this.grupos.set([
+            {
+              fechaInicio: '',
+              fechaFin: undefined,
+              turnoGrupal: { horaInicio: '', horaFin: '', extendido: false },
+              dias: this.#crearDiaEdicion(dias),
+            },
+          ]);
+        },
         error: () => this.#toastr.error('No se pudieron cargar los días'),
       });
   }
@@ -620,15 +931,181 @@ export default class HorarioFormPage {
     );
   }
 
-  vigenciaDia(diaId: number, campo: 'inicio' | 'fin', event: Event): void {
+  #crearDiaEdicion(
+    diasCatalogo: { diaId: number; nombre: string }[],
+  ): DiaEdicion[] {
+    return diasCatalogo.map((d) => ({
+      diaId: d.diaId,
+      nombre: d.nombre,
+      incluido: false,
+      turnos: [] as TurnoInput[],
+    }));
+  }
+
+  agregarGrupo(): void {
+    this.grupos.update((lista) => [
+      ...lista,
+      {
+        fechaInicio: '',
+        fechaFin: undefined,
+        turnoGrupal: { horaInicio: '', horaFin: '', extendido: false },
+        dias: this.#crearDiaEdicion(this.dias()),
+      },
+    ]);
+  }
+
+  quitarGrupo(index: number): void {
+    this.grupos.update((lista) => lista.filter((_, i) => i !== index));
+  }
+
+  grupoCampo(index: number, campo: 'inicio' | 'fin', event: Event): void {
     const value = (event.target as HTMLInputElement).value;
-    this.dias.update((lista) =>
-      lista.map((d) =>
-        d.diaId === diaId
+    this.grupos.update((lista) =>
+      lista.map((g, i) =>
+        i === index
           ? campo === 'inicio'
-            ? { ...d, vigenciaInicio: value }
-            : { ...d, vigenciaFin: value }
-          : d,
+            ? { ...g, fechaInicio: value }
+            : { ...g, fechaFin: value || undefined }
+          : g,
+      ),
+    );
+  }
+
+  grupoTurnoGrupal(
+    index: number,
+    campo: 'horaInicio' | 'horaFin' | 'extendido',
+    event: Event,
+  ): void {
+    const target = event.target as HTMLInputElement;
+    const value = campo === 'extendido' ? target.checked : target.value;
+    this.grupos.update((lista) =>
+      lista.map((g, i) =>
+        i === index
+          ? { ...g, turnoGrupal: { ...g.turnoGrupal, [campo]: value } }
+          : g,
+      ),
+    );
+  }
+
+  grupoTurnoGrupalValido(index: number): boolean {
+    const g = this.grupos()[index];
+    return !!g && !!g.turnoGrupal.horaInicio && !!g.turnoGrupal.horaFin;
+  }
+
+  aplicarTurnoGrupalGrupo(index: number): void {
+    const grupo = this.grupos()[index];
+    if (!grupo || !this.grupoTurnoGrupalValido(index)) {
+      return;
+    }
+    const t = grupo.turnoGrupal;
+    this.grupos.update((lista) =>
+      lista.map((g, i) =>
+        i === index
+          ? {
+              ...g,
+              dias: g.dias.map((d) =>
+                d.incluido ? { ...d, turnos: [{ ...t }] } : d,
+              ),
+            }
+          : g,
+      ),
+    );
+    this.#toastr.success(
+      `Turno ${t.horaInicio} - ${t.horaFin} aplicado a los días incluidos del grupo`,
+    );
+  }
+
+  toggleDiaGrupo(grupoIndex: number, diaId: number): void {
+    this.grupos.update((lista) =>
+      lista.map((g, i) =>
+        i === grupoIndex
+          ? {
+              ...g,
+              dias: g.dias.map((d) =>
+                d.diaId === diaId
+                  ? {
+                      ...d,
+                      incluido: !d.incluido,
+                      turnos: d.incluido ? [] : d.turnos,
+                    }
+                  : d,
+              ),
+            }
+          : g,
+      ),
+    );
+  }
+
+  turnoGrupoCampo(
+    grupoIndex: number,
+    diaId: number,
+    turnoIndex: number,
+    campo: 'horaInicio' | 'horaFin' | 'extendido',
+    event: Event,
+  ): void {
+    const target = event.target as HTMLInputElement;
+    const value = campo === 'extendido' ? target.checked : target.value;
+    this.grupos.update((lista) =>
+      lista.map((g, gi) =>
+        gi === grupoIndex
+          ? {
+              ...g,
+              dias: g.dias.map((d) =>
+                d.diaId === diaId
+                  ? {
+                      ...d,
+                      turnos: d.turnos.map((t, ti) =>
+                        ti === turnoIndex ? { ...t, [campo]: value } : t,
+                      ),
+                    }
+                  : d,
+              ),
+            }
+          : g,
+      ),
+    );
+  }
+
+  agregarTurnoGrupo(grupoIndex: number, diaId: number): void {
+    this.grupos.update((lista) =>
+      lista.map((g, gi) =>
+        gi === grupoIndex
+          ? {
+              ...g,
+              dias: g.dias.map((d) =>
+                d.diaId === diaId
+                  ? {
+                      ...d,
+                      turnos: [...d.turnos, { horaInicio: '', horaFin: '' }],
+                    }
+                  : d,
+              ),
+            }
+          : g,
+      ),
+    );
+  }
+
+  quitarTurnoGrupo(
+    grupoIndex: number,
+    diaId: number,
+    turnoIndex: number,
+  ): void {
+    this.grupos.update((lista) =>
+      lista.map((g, gi) =>
+        gi === grupoIndex
+          ? {
+              ...g,
+              dias: g.dias.map((d) =>
+                d.diaId === diaId
+                  ? {
+                      ...d,
+                      turnos: d.turnos.filter((_, ti) => ti !== turnoIndex),
+                    }
+                  : d,
+              ),
+            }
+          : g,
       ),
     );
   }
@@ -781,7 +1258,13 @@ export default class HorarioFormPage {
     }
     if (!this.diasValidos()) {
       this.#toastr.error(
-        'Cada día incluido debe tener al menos un turno completo y su vigencia si es rotativo',
+        'Cada día incluido debe tener al menos un turno completo',
+      );
+      return;
+    }
+    if (!this.gruposValidos()) {
+      this.#toastr.error(
+        'Un horario rotativo debe tener al menos un grupo válido con días y turnos completos',
       );
       return;
     }
@@ -802,18 +1285,38 @@ export default class HorarioFormPage {
       return;
     }
 
+    if (this.rotativo()) {
+      const grupos: GrupoVigenciaInput[] = this.grupos()
+        .filter((g) => g.fechaInicio)
+        .map((g) => ({
+          fechaInicio: g.fechaInicio,
+          fechaFin: g.fechaFin || null,
+          dias: g.dias
+            .filter((d) => d.incluido)
+            .map((d, i) => ({
+              diaId: d.diaId,
+              orden: i + 1,
+              turnos: d.turnos,
+            })),
+        }));
+
+      this.#crearHorario({
+        ...flat,
+        grupos,
+        usuarioIds: this.seleccionados().size
+          ? [...this.seleccionados()]
+          : undefined,
+        fechaInicio: this.fechaInicio() || undefined,
+        fechaFin: this.fechaFin() || null,
+      });
+      return;
+    }
+
     const dias: DiaInput[] = this.dias()
       .filter((d) => d.incluido)
       .map((d, i) => ({
         diaId: d.diaId,
         orden: i + 1,
-        vigencia:
-          (value.rotativo ?? false) && d.vigenciaInicio
-            ? {
-                fechaInicio: d.vigenciaInicio,
-                fechaFin: d.vigenciaFin || null,
-              }
-            : undefined,
         turnos: d.turnos,
       }));
 
@@ -835,7 +1338,8 @@ export default class HorarioFormPage {
     rotativo: boolean;
     regular: boolean;
     horasLaborales: number;
-    dias: DiaInput[];
+    dias?: DiaInput[];
+    grupos?: GrupoVigenciaInput[];
     usuarioIds?: number[];
     fechaInicio?: string;
     fechaFin?: string | null;

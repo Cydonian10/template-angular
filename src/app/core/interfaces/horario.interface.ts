@@ -32,12 +32,16 @@ export interface HorarioDiaDetalle {
   diaId: number;
   diaNombre: string;
   orden: number;
-  vigencia: {
-    vigenciaId: number;
-    fechaInicio: string | null;
-    fechaFin: string | null;
-  } | null;
+  vigenciaGrupoId: number | null;
   turnos: HorarioTurno[];
+}
+
+export interface GrupoVigenciaDetalle {
+  vigenciaGrupoId: number;
+  fechaInicio: string | null;
+  fechaFin: string | null;
+  orden: number;
+  dias: HorarioDiaDetalle[];
 }
 
 export interface UsuarioHorario {
@@ -62,6 +66,7 @@ export interface HorarioDetalle {
   regular: boolean;
   horasLaborales: number;
   dias: HorarioDiaDetalle[];
+  grupos: GrupoVigenciaDetalle[];
   usuarios: UsuarioHorario[];
 }
 
@@ -74,11 +79,13 @@ export interface TurnoInput {
 export interface DiaInput {
   diaId: number;
   orden?: number;
-  vigencia?: {
-    fechaInicio: string;
-    fechaFin?: string | null;
-  };
   turnos: TurnoInput[];
+}
+
+export interface GrupoVigenciaInput {
+  fechaInicio: string;
+  fechaFin?: string | null;
+  dias: DiaInput[];
 }
 
 export interface CrearHorarioDto {
@@ -88,7 +95,8 @@ export interface CrearHorarioDto {
   rotativo?: boolean;
   regular?: boolean;
   horasLaborales?: number;
-  dias: DiaInput[];
+  dias?: DiaInput[];
+  grupos?: GrupoVigenciaInput[];
   usuarioIds?: number[];
   fechaInicio?: string;
   fechaFin?: string | null;

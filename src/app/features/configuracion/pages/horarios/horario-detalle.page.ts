@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Dialog } from '@angular/cdk/dialog';
 import { EMPTY, catchError, finalize, tap } from 'rxjs';
@@ -61,64 +61,68 @@ import {
           }
         </div>
 
-        <!-- ========== DÍAS Y TURNOS ========== -->
-        <div class="card bg-base-100 border border-base-300">
-          <div class="card-body">
-            <h2 class="card-title">Días y turnos</h2>
-
-            @if (!h.dias.length) {
+        <!-- ========== DÍAS Y TURNOS AGRUPADOS POR VIGENCIA ========== -->
+        @if (!gruposDias().length) {
+          <div class="card bg-base-100 border border-base-300">
+            <div class="card-body">
+              <h2 class="card-title">Días y turnos</h2>
               <p class="text-sm text-base-content/60 py-4">
                 El horario no tiene días configurados.
               </p>
-            } @else {
-              <div class="overflow-x-auto">
-                <table class="table table-sm">
-                  <thead>
-                    <tr>
-                      <th>Día</th>
-                      <th>Turnos</th>
-                      <th>Vigencia</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    @for (d of h.dias; track d.horarioDiaId) {
-                      <tr>
-                        <td>{{ d.diaNombre }}</td>
-                        <td>
-                          @for (t of d.turnos; track t.turnoId) {
-                            <span
-                              class="badge badge-outline mr-1"
-                              [class.badge-warning]="t.extendido"
-                            >
-                              {{ t.horaInicio }} - {{ t.horaFin }}
-                              @if (t.diaSalida) {
-                                (sale {{ t.diaSalida.diaNombre }})
-                              }
-                            </span>
-                          } @empty {
-                            <span class="text-xs text-base-content/50">
-                              Sin turnos
-                            </span>
-                          }
-                        </td>
-                        <td>
-                          @if (d.vigencia) {
-                            {{ d.vigencia.fechaInicio }} -
-                            {{ d.vigencia.fechaFin ?? 'indefinida' }}
-                          } @else {
-                            <span class="text-xs text-base-content/50">
-                              —
-                            </span>
-                          }
-                        </td>
-                      </tr>
-                    }
-                  </tbody>
-                </table>
-              </div>
-            }
+            </div>
           </div>
-        </div>
+        } @else {
+          @for (grupo of gruposDias(); track grupo.key) {
+            <div class="card bg-base-100 border border-base-300">
+              <div class="card-body">
+                <h2 class="card-title">
+                  @if (grupo.etiqueta) {
+                    <span class="badge badge-info badge-lg">
+                      {{ grupo.etiqueta }}
+                    </span>
+                  } @else {
+                    Días y turnos
+                  }
+                </h2>
+
+                <div class="overflow-x-auto">
+                  <table class="table table-sm">
+                    <thead>
+                      <tr>
+                        <th>Día</th>
+                        <th>Turnos</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @for (d of grupo.dias; track d.horarioDiaId) {
+                        <tr>
+                          <td>{{ d.diaNombre }}</td>
+                          <td>
+                            @for (t of d.turnos; track t.turnoId) {
+                              <span
+                                class="badge badge-outline mr-1"
+                                [class.badge-warning]="t.extendido"
+                              >
+                                {{ t.horaInicio }} - {{ t.horaFin }}
+                                @if (t.diaSalida) {
+                                  (sale {{ t.diaSalida.diaNombre }})
+                                }
+                              </span>
+                            } @empty {
+                              <span class="text-xs text-base-content/50">
+                                Sin turnos
+                              </span>
+                            }
+                          </td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          }
+        }
 
         <!-- ========== USUARIOS ASIGNADOS ========== -->
         <div class="card bg-base-100 border border-base-300">
@@ -188,6 +192,21 @@ export default class HorarioDetallePage {
   public loading = signal(true);
   public detalle = signal<HorarioDetalle | null>(null);
   public desasignando = signal<number | null>(null);
+
+  public gruposDias = computed(() => {
+    const h = this.detalle();
+    if (!h) {
+      return [];
+    }
+    if (h.rotativo) {
+      return h.grupos.map((g) => ({
+        key: `g${g.vigenciaGrupoId}`,
+        etiqueta: `${g.fechaInicio ?? '?'} - ${g.fechaFin ?? 'indefinida'}`,
+        dias: g.dias,
+      }));
+    }
+    return [{ key: 'todos', etiqueta: '', dias: h.dias }];
+  });
 
   private get horarioId(): number | null {
     const id = Number(this.#route.snapshot.params['id']);
