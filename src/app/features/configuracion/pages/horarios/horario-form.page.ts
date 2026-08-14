@@ -147,30 +147,41 @@ interface GrupoVigenciaEdicion {
               </fieldset>
 
               <div class="flex flex-wrap items-end gap-3">
-                <label class="fieldset flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    class="checkbox checkbox-sm"
-                    formControlName="extendido"
-                  />
-                  <span class="label-text">Extendido</span>
-                </label>
-                <label class="fieldset flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    class="checkbox checkbox-sm"
-                    formControlName="rotativo"
-                  />
-                  <span class="label-text">Rotativo</span>
-                </label>
-                <label class="fieldset flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    class="checkbox checkbox-sm"
-                    formControlName="regular"
-                  />
-                  <span class="label-text">Regular</span>
-                </label>
+                <fieldset class="fieldset">
+                  <legend class="fieldset-legend">Tipo de horario</legend>
+                  <div class="flex flex-wrap items-center gap-3">
+                    <label class="flex items-center gap-2">
+                      <input
+                        type="radio"
+                        name="tipoHorario"
+                        class="radio radio-sm"
+                        [checked]="!extendidoTipo() && !rotativo()"
+                        (change)="setTipo('regular')"
+                      />
+                      <span class="label-text">Regular</span>
+                    </label>
+                    <label class="flex items-center gap-2">
+                      <input
+                        type="radio"
+                        name="tipoHorario"
+                        class="radio radio-sm"
+                        [checked]="extendidoTipo()"
+                        (change)="setTipo('extendido')"
+                      />
+                      <span class="label-text">Extendido</span>
+                    </label>
+                    <label class="flex items-center gap-2">
+                      <input
+                        type="radio"
+                        name="tipoHorario"
+                        class="radio radio-sm"
+                        [checked]="rotativo()"
+                        (change)="setTipo('rotativo')"
+                      />
+                      <span class="label-text">Rotativo</span>
+                    </label>
+                  </div>
+                </fieldset>
 
                 <fieldset class="fieldset w-36">
                   <legend class="fieldset-legend">Horas laborales</legend>
@@ -254,29 +265,31 @@ interface GrupoVigenciaEdicion {
                           [value]="g.turnoGrupal.horaFin"
                           (change)="grupoTurnoGrupal(gi, 'horaFin', $event)"
                         />
-                        <label class="flex items-center gap-1 text-xs">
-                          <input
-                            type="checkbox"
-                            class="checkbox checkbox-xs"
-                            [checked]="g.turnoGrupal.extendido"
-                            (change)="grupoTurnoGrupal(gi, 'extendido', $event)"
-                          />
-                          Extendido
-                        </label>
-                        @if (g.turnoGrupal.extendido) {
-                          <label class="text-xs">Día salida</label>
-                          <select
-                            class="select select-xs w-28"
-                            [value]="g.turnoGrupal.diaSalidaId ?? ''"
-                            (change)="grupoTurnoGrupalSalidaDia(gi, $event)"
-                          >
-                            <option [value]="''" disabled>Selecciona</option>
-                            @for (sd of dias(); track sd.diaId) {
-                              <option [value]="sd.diaId">
-                                {{ sd.nombre }}
-                              </option>
-                            }
-                          </select>
+                        @if (extendidoTipo() || rotativo()) {
+                          <label class="flex items-center gap-1 text-xs">
+                            <input
+                              type="checkbox"
+                              class="checkbox checkbox-xs"
+                              [checked]="g.turnoGrupal.extendido"
+                              (change)="grupoTurnoGrupal(gi, 'extendido', $event)"
+                            />
+                            Extendido
+                          </label>
+                          @if (g.turnoGrupal.extendido) {
+                            <label class="text-xs">Día salida</label>
+                            <select
+                              class="select select-xs w-28"
+                              [value]="g.turnoGrupal.diaSalidaId ?? ''"
+                              (change)="grupoTurnoGrupalSalidaDia(gi, $event)"
+                            >
+                              <option [value]="''" disabled>Selecciona</option>
+                              @for (sd of dias(); track sd.diaId) {
+                                <option [value]="sd.diaId">
+                                  {{ sd.nombre }}
+                                </option>
+                              }
+                            </select>
+                          }
                         }
                         <button
                           type="button"
@@ -348,41 +361,46 @@ interface GrupoVigenciaEdicion {
                                       )
                                     "
                                   />
-                                  <div
-                                    class="flex items-center justify-between"
-                                  >
-                                    <label
-                                      class="flex items-center gap-1 text-[10px]"
+                                    <div
+                                      class="flex items-center justify-between"
                                     >
-                                      <input
-                                        type="checkbox"
-                                        class="checkbox checkbox-xs"
-                                        [checked]="t.extendido"
-                                        (change)="
-                                          turnoGrupoCampo(
-                                            gi,
-                                            d.diaId,
-                                            ti,
-                                            'extendido',
-                                            $event
-                                          )
+                                      @if (extendidoTipo() || rotativo()) {
+                                        <label
+                                          class="flex items-center gap-1 text-[10px]"
+                                        >
+                                          <input
+                                            type="checkbox"
+                                            class="checkbox checkbox-xs"
+                                            [checked]="t.extendido"
+                                            (change)="
+                                              turnoGrupoCampo(
+                                                gi,
+                                                d.diaId,
+                                                ti,
+                                                'extendido',
+                                                $event
+                                              )
+                                            "
+                                          />
+                                          Ext
+                                        </label>
+                                      }
+                                      <button
+                                        type="button"
+                                        class="btn btn-xs btn-ghost btn-error px-1"
+                                        (click)="
+                                          quitarTurnoGrupo(gi, d.diaId, ti)
                                         "
-                                      />
-                                      Ext
-                                    </label>
-                                    <button
-                                      type="button"
-                                      class="btn btn-xs btn-ghost btn-error px-1"
-                                      (click)="
-                                        quitarTurnoGrupo(gi, d.diaId, ti)
-                                      "
                                     >
                                       <fa-icon
                                         [icon]="iconService.faTrash"
                                       ></fa-icon>
                                     </button>
                                   </div>
-                                  @if (t.extendido) {
+                                  @if (
+                                    (extendidoTipo() || rotativo()) &&
+                                    t.extendido
+                                  ) {
                                     <select
                                       class="select select-xs w-full"
                                       [value]="t.diaSalidaId ?? ''"
@@ -451,27 +469,29 @@ interface GrupoVigenciaEdicion {
                       [value]="turnoGrupal().horaFin"
                       (change)="turnoGrupalCampo('horaFin', $event)"
                     />
-                    <label class="flex items-center gap-1 text-sm">
-                      <input
-                        type="checkbox"
-                        class="checkbox checkbox-sm"
-                        [checked]="turnoGrupal().extendido"
-                        (change)="turnoGrupalCampo('extendido', $event)"
-                      />
-                      Extendido
-                    </label>
-                    @if (turnoGrupal().extendido) {
-                      <label class="label">Día salida</label>
-                      <select
-                        class="select select-sm w-32"
-                        [value]="turnoGrupal().diaSalidaId ?? ''"
-                        (change)="turnoGrupalSalidaDia($event)"
-                      >
-                        <option [value]="''" disabled>Selecciona</option>
-                        @for (sd of dias(); track sd.diaId) {
-                          <option [value]="sd.diaId">{{ sd.nombre }}</option>
-                        }
-                      </select>
+                    @if (extendidoTipo() || rotativo()) {
+                      <label class="flex items-center gap-1 text-sm">
+                        <input
+                          type="checkbox"
+                          class="checkbox checkbox-sm"
+                          [checked]="turnoGrupal().extendido"
+                          (change)="turnoGrupalCampo('extendido', $event)"
+                        />
+                        Extendido
+                      </label>
+                      @if (turnoGrupal().extendido) {
+                        <label class="label">Día salida</label>
+                        <select
+                          class="select select-sm w-32"
+                          [value]="turnoGrupal().diaSalidaId ?? ''"
+                          (change)="turnoGrupalSalidaDia($event)"
+                        >
+                          <option [value]="''" disabled>Selecciona</option>
+                          @for (sd of dias(); track sd.diaId) {
+                            <option [value]="sd.diaId">{{ sd.nombre }}</option>
+                          }
+                        </select>
+                      }
                     }
                   </div>
 
@@ -569,24 +589,26 @@ interface GrupoVigenciaEdicion {
                                 "
                               />
                               <div class="flex items-center justify-between">
-                                <label
-                                  class="flex items-center gap-1 text-[10px]"
-                                >
-                                  <input
-                                    type="checkbox"
-                                    class="checkbox checkbox-xs"
-                                    [checked]="t.extendido"
-                                    (change)="
-                                      turnoCampo(
-                                        d.diaId,
-                                        $index,
-                                        'extendido',
-                                        $event
-                                      )
-                                    "
-                                  />
-                                  Ext
-                                </label>
+                                @if (extendidoTipo() || rotativo()) {
+                                  <label
+                                    class="flex items-center gap-1 text-[10px]"
+                                  >
+                                    <input
+                                      type="checkbox"
+                                      class="checkbox checkbox-xs"
+                                      [checked]="t.extendido"
+                                      (change)="
+                                        turnoCampo(
+                                          d.diaId,
+                                          $index,
+                                          'extendido',
+                                          $event
+                                        )
+                                      "
+                                    />
+                                    Ext
+                                  </label>
+                                }
                                 <button
                                   type="button"
                                   class="btn btn-xs btn-ghost btn-error px-1"
@@ -597,7 +619,7 @@ interface GrupoVigenciaEdicion {
                                   ></fa-icon>
                                 </button>
                               </div>
-                              @if (t.extendido) {
+                              @if ((extendidoTipo() || rotativo()) && t.extendido) {
                                 <select
                                   class="select select-xs w-full"
                                   [value]="t.diaSalidaId ?? ''"
@@ -811,6 +833,10 @@ export default class HorarioFormPage {
     initialValue: this.form.controls.rotativo.value,
   });
 
+  public extendidoTipo = toSignal(this.form.controls.extendido.valueChanges, {
+    initialValue: this.form.controls.extendido.value,
+  });
+
   public diasValidos = computed(() => {
     if (this.esEdicion() || this.rotativo()) {
       return true;
@@ -849,6 +875,9 @@ export default class HorarioFormPage {
     }
     if (this.esEdicion()) {
       return null;
+    }
+    if (this.extendidoTipo() && !this.#tieneTurnoExtendido()) {
+      return 'Un horario extendido debe tener al menos un turno extendido con día de salida.';
     }
     if (this.rotativo()) {
       const lista = this.grupos();
@@ -1012,6 +1041,49 @@ export default class HorarioFormPage {
     this.cargando.set(false);
   }
 
+  setTipo(tipo: 'regular' | 'extendido' | 'rotativo'): void {
+    this.form.patchValue({
+      regular: tipo === 'regular',
+      extendido: tipo === 'extendido',
+      rotativo: tipo === 'rotativo',
+    });
+    if (tipo === 'regular') {
+      this.#limpiarTurnosExtendidos();
+    }
+  }
+
+  #limpiarTurnosExtendidos(): void {
+    this.dias.update((lista) =>
+      lista.map((d) => ({
+        ...d,
+        turnos: d.turnos.map((t) => ({
+          ...t,
+          extendido: false,
+          diaSalidaId: null,
+        })),
+      })),
+    );
+    this.grupos.update((lista) =>
+      lista.map((g) => ({
+        ...g,
+        turnoGrupal: { ...g.turnoGrupal, extendido: false, diaSalidaId: null },
+        dias: g.dias.map((d) => ({
+          ...d,
+          turnos: d.turnos.map((t) => ({
+            ...t,
+            extendido: false,
+            diaSalidaId: null,
+          })),
+        })),
+      })),
+    );
+    this.turnoGrupal.update((t) => ({
+      ...t,
+      extendido: false,
+      diaSalidaId: null,
+    }));
+  }
+
   toggleDia(diaId: number): void {
     this.dias.update((lista) =>
       lista.map((d) =>
@@ -1043,6 +1115,18 @@ export default class HorarioFormPage {
             extendido: t.extendido,
           },
     );
+  }
+
+  #tieneTurnoExtendido(): boolean {
+    const enDias = this.dias()
+      .filter((d) => d.incluido)
+      .some((d) => d.turnos.some((t) => t.extendido && !!t.diaSalidaId));
+    const enGrupos = this.grupos().some((g) =>
+      g.dias
+        .filter((d) => d.incluido)
+        .some((d) => d.turnos.some((t) => t.extendido && !!t.diaSalidaId)),
+    );
+    return enDias || enGrupos;
   }
 
   agregarGrupo(): void {
@@ -1463,6 +1547,12 @@ export default class HorarioFormPage {
     if (!this.gruposValidos()) {
       this.#toastr.error(
         'Un horario rotativo debe tener al menos un grupo válido con días y turnos completos',
+      );
+      return;
+    }
+    if (this.extendidoTipo() && !this.#tieneTurnoExtendido()) {
+      this.#toastr.error(
+        'Un horario extendido debe tener al menos un turno extendido con día de salida',
       );
       return;
     }
