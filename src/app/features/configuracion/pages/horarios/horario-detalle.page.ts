@@ -268,9 +268,12 @@ export default class HorarioDetallePage {
     });
   });
 
-  #formatHora(isoTime: string): string {
-    if (!isoTime) return '';
-    const date = new Date(isoTime);
+  #formatHora(value: string): string {
+    if (!value) return '';
+    const match = /^(\d{2}):(\d{2})/.exec(value);
+    if (match) return `${match[1]}:${match[2]}`;
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return value;
     const h = date.getUTCHours().toString().padStart(2, '0');
     const m = date.getUTCMinutes().toString().padStart(2, '0');
     return `${h}:${m}`;
