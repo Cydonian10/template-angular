@@ -1,11 +1,9 @@
 import { Component, inject, signal } from '@angular/core';
-import { Dialog } from '@angular/cdk/dialog';
 import {
   BehaviorSubject,
   EMPTY,
   catchError,
   debounceTime,
-  firstValueFrom,
   of,
   switchMap,
   tap,
@@ -19,10 +17,6 @@ import { UnidadesService } from '../../../../api/unidades.service';
 import { AreasService } from '../../../../api/areas.service';
 import BreadcrumbsNg from '../../../../layout/breadcrumbs/breadcrumbs.ng';
 import HorariosTable from './components/horarios-table.ng';
-import HorarioFormDialog, {
-  HorarioFormDialogData,
-  HorarioFormDialogResult,
-} from './components/horario-form.dialog.ng';
 import {
   Horario,
   OperationResult,
@@ -131,7 +125,6 @@ export default class HorariosPage {
   #horariosService = inject(HorariosService);
   #unidadesService = inject(UnidadesService);
   #areasService = inject(AreasService);
-  #dialog = inject(Dialog);
   #toastr = inject(ToastrService);
   #router = inject(Router);
   #destroyRef = inject(DestroyRef);
@@ -169,107 +162,15 @@ export default class HorariosPage {
   }
 
   abrirNuevo(): void {
-    this.abrirDialog(null);
+    this.#router.navigate(['/configuracion/horario-2/nuevo']);
   }
 
   abrirEditar(horario: Horario): void {
-    this.abrirDialog(horario);
-  }
-
-  private async abrirDialog(horario: Horario | null): Promise<void> {
-    let unidades: Unidad[] = [];
-    let areas: Area[] = [];
-    try {
-      unidades = await firstValueFrom(this.#unidadesService.listar());
-      if (horario) {
-        areas = await firstValueFrom(
-          this.#areasService.listar(horario.unidadId),
-        );
-      }
-    } catch {
-      this.#toastr.error('No se pudieron cargar las unidades o áreas');
-      return;
-    }
-
-    const ref = this.#dialog.open<HorarioFormDialogResult>(
-      HorarioFormDialog,
-      {
-        data: { horario, unidades, areas } as HorarioFormDialogData,
-        disableClose: true,
-        width: '720px',
-      },
-    );
-    ref.closed
-      .pipe(takeUntilDestroyed(this.#destroyRef))
-      .subscribe((result) => {
-        if (!result) {
-          return;
-        }
-        if (horario) {
-          this.actualizarHorario(horario.horarioId, result);
-        } else {
-          this.crearHorario(result);
-        }
-      });
-  }
-
-  private crearHorario(result: HorarioFormDialogResult): void {
-    this.#horariosService
-      .crear({
-        nombre: result.nombre,
-        areaId: result.areaId,
-        extendido: result.extendido,
-        rotativo: result.rotativo,
-        regular: result.regular,
-        horasLaborales: result.horasLaborales,
-        dias: result.dias,
-        usuarioIds: result.usuarioIds,
-        fechaInicio: result.fechaInicio,
-        fechaFin: result.fechaFin,
-      })
-      .pipe(
-        takeUntilDestroyed(this.#destroyRef),
-        tap((res) => this.procesarResultado(res)),
-        tap((res) => {
-          if (res.State === 1) {
-            this.recargar();
-          }
-        }),
-        catchError(() => {
-          this.#toastr.error('Error al crear el horario');
-          return EMPTY;
-        }),
-      )
-      .subscribe();
-  }
-
-  private actualizarHorario(
-    id: number,
-    result: HorarioFormDialogResult,
-  ): void {
-    this.#horariosService
-      .actualizar(id, {
-        nombre: result.nombre,
-        areaId: result.areaId,
-        extendido: result.extendido,
-        rotativo: result.rotativo,
-        regular: result.regular,
-        horasLaborales: result.horasLaborales,
-      })
-      .pipe(
-        takeUntilDestroyed(this.#destroyRef),
-        tap((res) => this.procesarResultado(res)),
-        tap((res) => {
-          if (res.State === 1) {
-            this.recargar();
-          }
-        }),
-        catchError(() => {
-          this.#toastr.error('Error al actualizar el horario');
-          return EMPTY;
-        }),
-      )
-      .subscribe();
+    this.#router.navigate([
+      '/configuracion/horario-2',
+      horario.horarioId,
+      'editar',
+    ]);
   }
 
   verDetalle(horario: Horario): void {
