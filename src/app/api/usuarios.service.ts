@@ -3,11 +3,14 @@ import { inject, Injectable } from '@angular/core';
 import { environment } from '../../environments/environment.development';
 import { Observable } from 'rxjs';
 import {
+  ActualizarUsuarioDto,
   AsignarUsuariosDto,
+  CrearSyncUsuarioDto,
   OperationResult,
   SyncUsuario,
   Usuario,
 } from '../core/interfaces/usuario.interface';
+import { OperationResultCreate } from '../core/interfaces/unidad.interface';
 
 export interface UsuariosFiltro {
   activo?: boolean;
@@ -40,13 +43,30 @@ export class UsuariosService {
     return this.#http.get<Usuario[]>(`${this.#base}/usuarios`, { params });
   }
 
-  obtenerPorId(id: number): Observable<Usuario> {
-    return this.#http.get<Usuario>(`${this.#base}/usuarios/${id}`);
+  obtenerPorId(id: number): Observable<Usuario[]> {
+    return this.#http.get<Usuario[]>(`${this.#base}/usuarios/${id}`);
+  }
+
+  actualizar(
+    id: number,
+    dto: ActualizarUsuarioDto,
+  ): Observable<OperationResult> {
+    return this.#http.patch<OperationResult>(
+      `${this.#base}/usuarios/${id}`,
+      dto,
+    );
   }
 
   listarSync(): Observable<SyncUsuario[]> {
     return this.#http.get<SyncUsuario[]>(
       `${this.#base}/usuarios/sync-usuarios`,
+    );
+  }
+
+  crearSyncUsuario(dto: CrearSyncUsuarioDto): Observable<OperationResultCreate> {
+    return this.#http.post<OperationResultCreate>(
+      `${this.#base}/usuarios/sync-usuarios`,
+      dto,
     );
   }
 

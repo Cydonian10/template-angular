@@ -8,10 +8,14 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
+import { Dialog } from '@angular/cdk/dialog';
 import {
   BehaviorSubject,
+  EMPTY,
   catchError,
   debounceTime,
+  finalize,
+  firstValueFrom,
   of,
   switchMap,
   tap,
@@ -26,9 +30,17 @@ import { UsuariosUiService } from '../../../../core/services/usuarios-ui.service
 import BreadcrumbsNg from '../../../../layout/breadcrumbs/breadcrumbs.ng';
 import PaginatorNg from '../../../../shared/paginator/paginator.ng';
 import { PaginadorDataSource } from '../../../../core/datasources/paginador-data-source';
+import CambiarAreaDialog, {
+  CambiarAreaDialogData,
+  CambiarAreaDialogResult,
+} from './components/cambiar-area.dialog.ng';
 import { Unidad } from '../../../../core/interfaces/unidad.interface';
 import { Area } from '../../../../core/interfaces/area.interface';
-import { Usuario } from '../../../../core/interfaces/usuario.interface';
+import {
+  ActualizarUsuarioDto,
+  OperationResult,
+  Usuario,
+} from '../../../../core/interfaces/usuario.interface';
 
 interface FiltroUsuarios {
   activo?: boolean;
@@ -52,6 +64,27 @@ interface FiltroUsuarios {
           Agregar usuarios
         </button>
       </div>
+
+      <!-- ========== CONFIRMACIÓN DE DESACTIVACIÓN ========== -->
+      @if (confirmarDesactivar(); as u) {
+        <div class="modal modal-open">
+          <div class="modal-box">
+            <h3 class="text-lg font-bold">Desactivar usuario</h3>
+            <p class="py-4">
+              ¿Seguro que deseas desactivar a
+              <strong>{{ u.nombres }} {{ u.apellidos }}</strong>?
+            </p>
+            <div class="modal-action">
+              <button class="btn btn-ghost" (click)="cancelarDesactivacion()">
+                Cancelar
+              </button>
+              <button class="btn btn-error" (click)="confirmarDesactivacion()">
+                Desactivar
+              </button>
+            </div>
+          </div>
+        </div>
+      }
 
       <!-- ========== FILTROS ========== -->
       <div class="flex flex-wrap items-end gap-3">
@@ -78,7 +111,7 @@ interface FiltroUsuarios {
           <legend class="fieldset-legend">Área</legend>
           <select
             class="select w-full"
-            (change)="cambiarArea($event)"
+            (change)="cambiarAreaFiltro($event)"
             [disabled]="unidadIdFiltro() === undefined"
           >
             <option value="">Todas</option>
@@ -131,10 +164,12 @@ interface FiltroUsuarios {
                     <th>Unidad</th>
                     <th>Área</th>
                     <th>Estado</th>
+                    <th>Supervisor</th>
+                    <th></th>
                   </tr>
                 </thead>
                 <tbody>
-                  @for (u of filas(); track u.usuarioId) {
+                  @for (u of filas(); track u.usuarioAreaId) {
                     <tr>
                       <td>{{ u.usuario }}</td>
                       <td>{{ u.nombres }}</td>
@@ -150,6 +185,55 @@ interface FiltroUsuarios {
                         >
                           {{ u.activo ? 'Activo' : 'Inactivo' }}
                         </span>
+                      </td>
+                      <td>
+                        <span
+                          class="badge badge-sm"
+                          [class.badge-primary]="u.esSupervisor"
+                          [class.badge-ghost]="!u.esSupervisor"
+                        >
+                          {{ u.esSupervisor ? 'Sí' : 'No' }}
+                        </span>
+                      </td>
+                      <td class="text-end">
+                        <div class="flex justify-end gap-1">
+                          <button
+                            class="btn btn-xs btn-outline"
+                            [class.btn-primary]="u.esSupervisor"
+                            [disabled]="actualizandoId() === u.usuarioAreaId"
+                            (click)="cambiarSupervisor(u)"
+                            aria-label="Cambiar supervisor"
+                          >
+                            <fa-icon [icon]="iconService.faShield"></fa-icon>
+                          </button>
+                          <button
+                            class="btn btn-xs btn-outline"
+                            [disabled]="actualizandoId() === u.usuarioAreaId"
+                            (click)="cambiarArea(u)"
+                            aria-label="Cambiar área"
+                          >
+                            <fa-icon [icon]="iconService.faPencil"></fa-icon>
+                          </button>
+                          @if (u.activo) {
+                            <button
+                              class="btn btn-xs btn-outline btn-error"
+                              [disabled]="actualizandoId() === u.usuarioAreaId"
+                              (click)="pedirDesactivar(u)"
+                              aria-label="Desactivar usuario"
+                            >
+                              <fa-icon [icon]="iconService.faBan"></fa-icon>
+                            </button>
+                          } @else {
+                            <button
+                              class="btn btn-xs btn-outline"
+                              [disabled]="actualizandoId() === u.usuarioAreaId"
+                              (click)="activar(u)"
+                              aria-label="Activar usuario"
+                            >
+                              <fa-icon [icon]="iconService.faUserCheck"></fa-icon>
+                            </button>
+                          }
+                        </div>
                       </td>
                     </tr>
                   }
@@ -175,12 +259,15 @@ export default class UsuariosPage {
   #areasService = inject(AreasService);
   #usuariosService = inject(UsuariosService);
   #ui = inject(UsuariosUiService);
+  #dialog = inject(Dialog);
   #toastr = inject(ToastrService);
   #router = inject(Router);
   #destroyRef = inject(DestroyRef);
 
   public loading = signal(false);
   public unidadIdFiltro = signal<number | undefined>(undefined);
+  public confirmarDesactivar = signal<Usuario | null>(null);
+  public actualizandoId = signal<number | null>(null);
 
   #filtros$ = new BehaviorSubject<FiltroUsuarios>({ activo: true });
 
@@ -202,7 +289,7 @@ export default class UsuariosPage {
     const extra = this.adicionales().filter(
       (a) =>
         this.coincideFiltro(a) &&
-        !base.some((b) => b.usuarioId === a.usuarioId),
+        !base.some((b) => b.usuarioAreaId === a.usuarioAreaId),
     );
     return [...extra, ...base];
   });
@@ -244,9 +331,66 @@ export default class UsuariosPage {
     this.#router.navigate(['/mantenimiento/usuarios/agregar']);
   }
 
+  cambiarSupervisor(u: Usuario): void {
+    this.#patchear(u, {
+      usuarioAreaId: u.usuarioAreaId,
+      esSupervisor: !u.esSupervisor,
+    });
+  }
+
+  pedirDesactivar(u: Usuario): void {
+    this.confirmarDesactivar.set(u);
+  }
+
+  cancelarDesactivacion(): void {
+    this.confirmarDesactivar.set(null);
+  }
+
+  confirmarDesactivacion(): void {
+    const u = this.confirmarDesactivar();
+    if (!u) {
+      return;
+    }
+    this.confirmarDesactivar.set(null);
+    this.#patchear(u, { activo: false });
+  }
+
+  activar(u: Usuario): void {
+    this.#patchear(u, { activo: true });
+  }
+
+  async cambiarArea(u: Usuario): Promise<void> {
+    let areas: Area[] = [];
+    try {
+      areas = await firstValueFrom(this.#areasService.listar(u.unidadId));
+    } catch {
+      this.#toastr.error('No se pudieron cargar las áreas');
+      return;
+    }
+
+    const ref = this.#dialog.open<CambiarAreaDialogResult>(CambiarAreaDialog, {
+      data: { usuario: u, areas } as CambiarAreaDialogData,
+      disableClose: true,
+      width: '480px',
+    });
+    ref.closed
+      .pipe(takeUntilDestroyed(this.#destroyRef))
+      .subscribe((result) => {
+        if (!result) {
+          return;
+        }
+        this.#patchear(u, {
+          usuarioAreaId: u.usuarioAreaId,
+          areaId: result.areaId,
+        });
+      });
+  }
+
   cambiarEstado(event: Event): void {
     const value = (event.target as HTMLSelectElement).value;
-    this.#actualizarFiltro({ activo: value === '' ? undefined : value === 'true' });
+    this.#actualizarFiltro({
+      activo: value === '' ? undefined : value === 'true',
+    });
   }
 
   cambiarUnidad(event: Event): void {
@@ -266,7 +410,7 @@ export default class UsuariosPage {
     this.#actualizarFiltro({ unidadId, areaId: undefined });
   }
 
-  cambiarArea(event: Event): void {
+  cambiarAreaFiltro(event: Event): void {
     const value = (event.target as HTMLSelectElement).value;
     this.#actualizarFiltro({
       areaId: value === '' ? undefined : Number(value),
@@ -276,6 +420,58 @@ export default class UsuariosPage {
   buscar(event: Event): void {
     const value = (event.target as HTMLInputElement).value.trim();
     this.#actualizarFiltro({ busqueda: value || undefined });
+  }
+
+  #patchear(u: Usuario, dto: ActualizarUsuarioDto): void {
+    this.actualizandoId.set(u.usuarioAreaId);
+    this.#usuariosService
+      .actualizar(u.usuarioId, dto)
+      .pipe(
+        takeUntilDestroyed(this.#destroyRef),
+        tap((res) => this.procesarResultado(res)),
+        tap((res) => {
+          if (res.State === 1) {
+            this.aplicarActualizado(u.usuarioId);
+          }
+        }),
+        catchError(() => {
+          this.#toastr.error('Error al actualizar el usuario');
+          return EMPTY;
+        }),
+        finalize(() => this.actualizandoId.set(null)),
+      )
+      .subscribe();
+  }
+
+  private aplicarActualizado(usuarioId: number): void {
+    this.#usuariosService
+      .obtenerPorId(usuarioId)
+      .pipe(takeUntilDestroyed(this.#destroyRef))
+      .subscribe({
+        next: (filas) => {
+          if (!filas.length) {
+            this.recargar();
+            return;
+          }
+          const visibles = filas.filter((f) => this.coincideFiltro(f));
+          if (!visibles.length) {
+            this.recargar();
+            return;
+          }
+          this.usuarios.update((lista) => [
+            ...lista.filter((u) => u.usuarioId !== usuarioId),
+            ...visibles,
+          ]);
+          this.adicionales.update((lista) =>
+            lista.filter((u) => u.usuarioId !== usuarioId),
+          );
+        },
+        error: () => this.recargar(),
+      });
+  }
+
+  private recargar(): void {
+    this.#filtros$.next({ ...this.#filtros$.getValue() });
   }
 
   #actualizarFiltro(patch: Partial<FiltroUsuarios>): void {
@@ -303,5 +499,11 @@ export default class UsuariosPage {
       }
     }
     return true;
+  }
+
+  private procesarResultado(res: OperationResult): void {
+    res.State === 1
+      ? this.#toastr.success(res.Message)
+      : this.#toastr.error(res.Message);
   }
 }

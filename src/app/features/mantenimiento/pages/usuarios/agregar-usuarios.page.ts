@@ -23,6 +23,14 @@ import {
   SyncUsuario,
 } from '../../../../core/interfaces/usuario.interface';
 
+interface SeleccionSync {
+  syncUsuarioId?: number | null;
+  usuario: string;
+  nombres?: string;
+  apellidos?: string;
+  dni?: string;
+}
+
 @Component({
   selector: 'agregar-usuarios-page',
   imports: [FontAwesomeModule, BreadcrumbsNg],
@@ -88,6 +96,66 @@ import {
         </div>
       </div>
 
+      <!-- ========== NUEVO USUARIO SYNC ========== -->
+      <div class="card bg-base-100 border border-base-300">
+        <div class="card-body gap-4">
+          <h2 class="card-title">Nuevo usuario sync</h2>
+
+          <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
+            <fieldset class="fieldset">
+              <legend class="fieldset-legend">Usuario *</legend>
+              <input
+                type="text"
+                class="input w-full"
+                placeholder="ej: jperez"
+                [value]="nuevoSync().usuario"
+                (input)="nuevoSyncCampo('usuario', $event)"
+              />
+            </fieldset>
+            <fieldset class="fieldset">
+              <legend class="fieldset-legend">Nombres</legend>
+              <input
+                type="text"
+                class="input w-full"
+                placeholder="Juan"
+                [value]="nuevoSync().nombres"
+                (input)="nuevoSyncCampo('nombres', $event)"
+              />
+            </fieldset>
+            <fieldset class="fieldset">
+              <legend class="fieldset-legend">Apellidos</legend>
+              <input
+                type="text"
+                class="input w-full"
+                placeholder="Perez"
+                [value]="nuevoSync().apellidos"
+                (input)="nuevoSyncCampo('apellidos', $event)"
+              />
+            </fieldset>
+            <fieldset class="fieldset">
+              <legend class="fieldset-legend">DNI</legend>
+              <input
+                type="text"
+                class="input w-full"
+                placeholder="20010001"
+                [value]="nuevoSync().dni"
+                (input)="nuevoSyncCampo('dni', $event)"
+              />
+            </fieldset>
+            <div class="flex items-end">
+              <button
+                class="btn btn-outline w-full"
+                [disabled]="!nuevoSync().usuario.trim()"
+                (click)="agregarNuevoSync()"
+              >
+                <fa-icon [icon]="iconService.faPlus"></fa-icon>
+                Agregar a selección
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- ========== USUARIOS DE SYNC ========== -->
       <div class="card bg-base-100 border border-base-300">
         <div class="card-body">
@@ -96,9 +164,7 @@ import {
 
             <button
               class="btn btn-primary"
-              [disabled]="
-                !areaId() || !seleccionados().length || loading()
-              "
+              [disabled]="!areaId() || !seleccionados().length || loading()"
               (click)="agregar()"
             >
               <fa-icon [icon]="iconService.faUserPlus"></fa-icon>
@@ -133,17 +199,14 @@ import {
                 </thead>
                 <tbody>
                   @for (s of syncFiltrados(); track s.syncUsuarioId) {
-                    <tr [class.opacity-60]="s.migrado">
+                    <tr [class.opacity-60]="tieneAreaEnUnidad(s.syncUsuarioId)">
                       <td>
                         <input
                           type="checkbox"
                           class="checkbox checkbox-sm"
-                          [disabled]="s.migrado"
-                          [checked]="
-                            seleccionados().includes(s.syncUsuarioId) ||
-                            s.migrado
-                          "
-                          (change)="toggle(s.syncUsuarioId)"
+                          [disabled]="tieneAreaEnUnidad(s.syncUsuarioId)"
+                          [checked]="estaSeleccionado(s.syncUsuarioId)"
+                          (change)="toggle(s)"
                         />
                       </td>
                       <td>{{ s.usuario }}</td>
@@ -151,9 +214,13 @@ import {
                       <td>{{ s.apellidos }}</td>
                       <td>{{ s.dni }}</td>
                       <td>
-                        @if (s.migrado) {
+                        @if (tieneAreaEnUnidad(s.syncUsuarioId)) {
+                          <span class="badge badge-warning badge-sm">
+                            Ya tiene área en esta unidad
+                          </span>
+                        } @else if (s.migrado) {
                           <span class="badge badge-ghost badge-sm">
-                            Ya migrado
+                            Migrado en otra unidad
                           </span>
                         } @else {
                           <span class="badge badge-success badge-sm">
@@ -191,7 +258,14 @@ export default class AgregarUsuariosPage {
 
   public syncUsuarios = signal<SyncUsuario[]>([]);
   public busquedaSync = signal('');
-  public seleccionados = signal<number[]>([]);
+  public seleccionados = signal<SeleccionSync[]>([]);
+  public ocupadosEnUnidad = signal<Set<number>>(new Set());
+  public nuevoSync = signal<{
+    usuario: string;
+    nombres: string;
+    apellidos: string;
+    dni: string;
+  }>({ usuario: '', nombres: '', apellidos: '', dni: '' });
   public loadingSync = signal(false);
   public loading = signal(false);
 
@@ -229,12 +303,29 @@ export default class AgregarUsuariosPage {
     this.unidadId.set(value);
     this.areaId.set(undefined);
     this.areas.set([]);
+    this.ocupadosEnUnidad.set(new Set());
+
     this.#areasService
       .listar(value)
       .pipe(takeUntilDestroyed(this.#destroyRef))
       .subscribe({
         next: (areas) => this.areas.set(areas),
         error: () => this.#toastr.error('No se pudieron cargar las áreas'),
+      });
+
+    // Quienes ya tienen un area en esta unidad quedan deshabilitados (regla: un area por unidad)
+    this.#usuariosService
+      .listar({ unidadId: value })
+      .pipe(takeUntilDestroyed(this.#destroyRef))
+      .subscribe({
+        next: (usuarios) =>
+          this.ocupadosEnUnidad.set(
+            new Set(usuarios.map((u) => u.syncUsuarioId)),
+          ),
+        error: () =>
+          this.#toastr.error(
+            'No se pudieron verificar los usuarios de la unidad',
+          ),
       });
   }
 
@@ -246,21 +337,69 @@ export default class AgregarUsuariosPage {
     this.busquedaSync.set((event.target as HTMLInputElement).value);
   }
 
-  toggle(id: number): void {
-    this.seleccionados.update((sel) =>
-      sel.includes(id) ? sel.filter((x) => x !== id) : [...sel, id],
+  nuevoSyncCampo(
+    campo: 'usuario' | 'nombres' | 'apellidos' | 'dni',
+    event: Event,
+  ): void {
+    const value = (event.target as HTMLInputElement).value;
+    this.nuevoSync.update((n) => ({ ...n, [campo]: value }));
+  }
+
+  toggle(s: SyncUsuario): void {
+    this.seleccionados.update((sel) => {
+      const existe = sel.some((x) => x.syncUsuarioId === s.syncUsuarioId);
+      if (existe) {
+        return sel.filter((x) => x.syncUsuarioId !== s.syncUsuarioId);
+      }
+      return [
+        ...sel,
+        {
+          syncUsuarioId: s.syncUsuarioId,
+          usuario: s.usuario,
+          nombres: s.nombres ?? undefined,
+          apellidos: s.apellidos ?? undefined,
+          dni: s.dni ?? undefined,
+        },
+      ];
+    });
+  }
+
+  tieneAreaEnUnidad(syncUsuarioId: number): boolean {
+    return this.ocupadosEnUnidad().has(syncUsuarioId);
+  }
+
+  estaSeleccionado(syncUsuarioId: number): boolean {
+    return this.seleccionados().some(
+      (x) => x.syncUsuarioId === syncUsuarioId,
     );
+  }
+
+  agregarNuevoSync(): void {
+    const n = this.nuevoSync();
+    if (!n.usuario.trim()) {
+      return;
+    }
+    this.seleccionados.update((sel) => [
+      ...sel,
+      {
+        usuario: n.usuario.trim(),
+        nombres: n.nombres.trim() || undefined,
+        apellidos: n.apellidos.trim() || undefined,
+        dni: n.dni.trim() || undefined,
+      },
+    ]);
+    this.nuevoSync.set({ usuario: '', nombres: '', apellidos: '', dni: '' });
   }
 
   agregar(): void {
     const areaId = this.areaId();
-    const ids = this.seleccionados();
-    if (!areaId || !ids.length) {
+    const syncUsuarios = this.seleccionados();
+    if (!areaId || !syncUsuarios.length) {
       return;
     }
     this.loading.set(true);
     this.#usuariosService
-      .asignarUsuarios(areaId, { syncUsuarioIds: ids })
+      .asignarUsuarios(areaId, { syncUsuarios })
       .pipe(
         takeUntilDestroyed(this.#destroyRef),
         tap((res) => this.procesarResultado(res)),
@@ -270,10 +409,7 @@ export default class AgregarUsuariosPage {
           }
           return this.#usuariosService.listar({ areaId }).pipe(
             tap((usuarios) => {
-              const agregados = usuarios.filter((u) =>
-                ids.includes(u.syncUsuarioId),
-              );
-              this.#ui.agregar(agregados);
+              this.#ui.agregar(usuarios);
               this.#router.navigate(['/mantenimiento/usuarios']);
             }),
           );

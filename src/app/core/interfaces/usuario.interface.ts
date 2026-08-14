@@ -2,6 +2,7 @@ import { OperationResult } from './unidad.interface';
 
 export interface Usuario {
   usuarioId: number;
+  usuarioAreaId: number;
   syncUsuarioId: number;
   usuario: string;
   nombres: string;
@@ -28,12 +29,37 @@ export interface SyncUsuario {
 
 export interface ActualizarUsuarioDto {
   activo?: boolean;
+  usuarioAreaId?: number;
   areaId?: number;
   esSupervisor?: boolean;
 }
 
+export interface SyncUsuarioInput {
+  syncUsuarioId?: number | null;
+  usuario?: string;
+  nombres?: string;
+  apellidos?: string;
+  tipo?: string;
+  dni?: string;
+}
+
 export interface AsignarUsuariosDto {
-  syncUsuarioIds: number[];
+  syncUsuarios: SyncUsuarioInput[];
+}
+
+export interface CrearSyncUsuarioDto {
+  syncUsuarioId?: number | null;
+  usuario: string;
+  nombres?: string;
+  apellidos?: string;
+  tipo?: string;
+  dni?: string;
+}
+
+export interface CrearSyncUnidadDto {
+  syncUnidadId?: number | null;
+  codigo?: string;
+  nombre: string;
 }
 
 export type { OperationResult };

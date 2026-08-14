@@ -20,6 +20,10 @@ export interface OperationResult {
   CodeError: number | null;
 }
 
+export interface OperationResultCreate extends OperationResult {
+  Id: number | null;
+}
+
 export interface ActualizarUnidadDto {
   horasLaborales?: number;
   horasLaboralesTotales?: number;

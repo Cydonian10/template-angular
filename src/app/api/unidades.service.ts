@@ -6,9 +6,11 @@ import {
   ActualizarUnidadDto,
   MigrarDto,
   OperationResult,
+  OperationResultCreate,
   SyncUnidad,
   Unidad,
 } from '../core/interfaces/unidad.interface';
+import { CrearSyncUnidadDto } from '../core/interfaces/usuario.interface';
 
 @Injectable({
   providedIn: 'root',
@@ -24,6 +26,13 @@ export class UnidadesService {
 
   sync(): Observable<SyncUnidad[]> {
     return this.#http.get<SyncUnidad[]>(`${this.#base}/unidades/sync-unidades`);
+  }
+
+  crearSyncUnidad(dto: CrearSyncUnidadDto): Observable<OperationResultCreate> {
+    return this.#http.post<OperationResultCreate>(
+      `${this.#base}/unidades/sync-unidades`,
+      dto,
+    );
   }
 
   actualizar(id: number, dto: ActualizarUnidadDto): Observable<OperationResult> {
