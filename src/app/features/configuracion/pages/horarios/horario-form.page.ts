@@ -1,4 +1,4 @@
-import { Component, computed, DestroyRef, inject, signal } from '@angular/core';
+import { Component, computed, effect, DestroyRef, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
@@ -625,12 +625,7 @@ interface GrupoVigenciaEdicion {
 
             <button
               type="submit"
-              [disabled]="
-                form.invalid ||
-                !diasValidos() ||
-                !gruposValidos() ||
-                guardando()
-              "
+              [disabled]="guardando()"
               class="btn btn-primary"
             >
               @if (guardando()) {
@@ -643,7 +638,7 @@ interface GrupoVigenciaEdicion {
             </button>
           </div>
 
-          @if (motivoBloqueo()) {
+          @if (intentado() && motivoBloqueo()) {
             <p class="text-right text-xs text-error">{{ motivoBloqueo() }}</p>
           }
         </form>
@@ -666,6 +661,7 @@ export default class HorarioFormPage {
   public cargando = signal(true);
   public guardando = signal(false);
   public esEdicion = signal(false);
+  public intentado = signal(false);
 
   public unidades = signal<Unidad[]>([]);
   public areas = signal<Area[]>([]);
@@ -817,6 +813,12 @@ export default class HorarioFormPage {
       }
     }
     return null;
+  });
+
+  #resetIntentado = effect(() => {
+    if (this.intentado() && !this.motivoBloqueo()) {
+      this.intentado.set(false);
+    }
   });
 
   get nombre() {
@@ -1252,6 +1254,7 @@ export default class HorarioFormPage {
   }
 
   guardar(): void {
+    this.intentado.set(true);
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;
