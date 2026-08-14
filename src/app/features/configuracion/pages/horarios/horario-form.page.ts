@@ -29,6 +29,7 @@ import { AreasService } from '../../../../api/areas.service';
 import { UsuariosService } from '../../../../api/usuarios.service';
 import { Usuario } from '../../../../core/interfaces/usuario.interface';
 import BreadcrumbsNg from '../../../../layout/breadcrumbs/breadcrumbs.ng';
+import TurnosHoras from './components/turnos-horas.ng';
 
 interface DiaEdicion {
   diaId: number;
@@ -53,7 +54,7 @@ interface GrupoVigenciaEdicion {
 
 @Component({
   selector: 'horario-form-page',
-  imports: [ReactiveFormsModule, FontAwesomeModule, BreadcrumbsNg],
+  imports: [ReactiveFormsModule, FontAwesomeModule, BreadcrumbsNg, TurnosHoras],
   template: `
     <ng-breadcrumbs />
 
@@ -302,6 +303,14 @@ interface GrupoVigenciaEdicion {
                         </button>
                       </div>
 
+                      @if (g.turnoGrupal.horaInicio && g.turnoGrupal.horaFin) {
+                        <turnos-horas
+                          [turnos]="[g.turnoGrupal]"
+                          etiqueta="Suma por día"
+                          clase="mt-1 text-xs"
+                        />
+                      }
+
                       <!-- Grilla de días del grupo -->
                       <div
                         class="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-7"
@@ -441,9 +450,21 @@ interface GrupoVigenciaEdicion {
                                 —
                               </p>
                             }
+
+                            <turnos-horas
+                              [turnos]="d.turnos"
+                              etiqueta="Total"
+                              clase="mt-1 block border-t border-base-300 pt-1 text-center text-xs font-bold"
+                            />
                           </div>
                         }
                       </div>
+
+                      <turnos-horas
+                        [turnos]="turnosDeDias(g.dias)"
+                        etiqueta="Total grupo"
+                        clase="mt-3 block border-t border-base-300 pt-2 text-right text-sm font-bold"
+                      />
                     </div>
                   }
                 </div>
@@ -494,6 +515,14 @@ interface GrupoVigenciaEdicion {
                       }
                     }
                   </div>
+
+                  @if (turnoGrupal().horaInicio && turnoGrupal().horaFin) {
+                    <turnos-horas
+                      [turnos]="[turnoGrupal()]"
+                      etiqueta="Suma por día"
+                      clase="text-xs"
+                    />
+                  }
 
                   <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
                     <span class="text-xs font-medium">Días:</span>
@@ -655,9 +684,21 @@ interface GrupoVigenciaEdicion {
                             —
                           </p>
                         }
+
+                        <turnos-horas
+                          [turnos]="d.turnos"
+                          etiqueta="Total"
+                          clase="mt-1 block border-t border-base-300 pt-1 text-center text-xs font-bold"
+                        />
                       </div>
                     }
                   </div>
+
+                  <turnos-horas
+                    [turnos]="turnosDeDias(dias())"
+                    etiqueta="Total semanal"
+                    clase="mt-3 block border-t border-base-300 pt-2 text-right text-sm font-bold"
+                  />
                 </div>
               </div>
             }
@@ -1127,6 +1168,10 @@ export default class HorarioFormPage {
         .some((d) => d.turnos.some((t) => t.extendido && !!t.diaSalidaId)),
     );
     return enDias || enGrupos;
+  }
+
+  turnosDeDias(dias: DiaEdicion[]): TurnoInput[] {
+    return dias.filter((d) => d.incluido).flatMap((d) => d.turnos);
   }
 
   agregarGrupo(): void {
