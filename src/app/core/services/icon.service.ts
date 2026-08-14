@@ -83,6 +83,7 @@ import {
   faUser,
   faShield,
   faIdCard,
+  faUserMinus,
   faEyeSlash,
   faKey,
   faPlayCircle,
@@ -110,6 +111,7 @@ export class FontIconService {
   public faKey = faKey;
   public faUser = faUser;
   public faUserPlus = faUserPlus;
+  public faUserMinus = faUserMinus;
   public faIdCard = faIdCard;
   public faShield = faShield;
   public faUpload = faUpload;

@@ -30,6 +30,14 @@ export const routes: Routes = [
             loadChildren: () =>
               import('./features/mantenimiento/mantenimiento.routes'),
           },
+          {
+            path: 'configuracion',
+            data: {
+              breadcrumb: 'Configuración',
+            },
+            loadChildren: () =>
+              import('./features/configuracion/configuracion.routes'),
+          },
         ],
       },
     ],
