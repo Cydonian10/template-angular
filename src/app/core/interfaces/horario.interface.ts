@@ -74,6 +74,15 @@ export interface TurnoInput {
   horaInicio: string;
   horaFin: string;
   extendido?: boolean;
+  diaSalidaId?: number | null;
+}
+
+export interface TurnoDiaConectado {
+  salidaTurnoDiaId: number;
+  turnoId: number;
+  extendido: boolean;
+  diaId: number;
+  diaNombre: string;
 }
 
 export interface DiaInput {

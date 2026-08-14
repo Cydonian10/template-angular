@@ -1,4 +1,11 @@
-import { Component, computed, effect, DestroyRef, inject, signal } from '@angular/core';
+import {
+  Component,
+  computed,
+  effect,
+  DestroyRef,
+  inject,
+  signal,
+} from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
@@ -34,6 +41,7 @@ interface TurnoGrupal {
   horaInicio: string;
   horaFin: string;
   extendido: boolean;
+  diaSalidaId?: number | null;
 }
 
 interface GrupoVigenciaEdicion {
@@ -255,6 +263,21 @@ interface GrupoVigenciaEdicion {
                           />
                           Extendido
                         </label>
+                        @if (g.turnoGrupal.extendido) {
+                          <label class="text-xs">Día salida</label>
+                          <select
+                            class="select select-xs w-28"
+                            [value]="g.turnoGrupal.diaSalidaId ?? ''"
+                            (change)="grupoTurnoGrupalSalidaDia(gi, $event)"
+                          >
+                            <option [value]="''" disabled>Selecciona</option>
+                            @for (sd of dias(); track sd.diaId) {
+                              <option [value]="sd.diaId">
+                                {{ sd.nombre }}
+                              </option>
+                            }
+                          </select>
+                        }
                         <button
                           type="button"
                           class="btn btn-xs btn-outline"
@@ -359,6 +382,29 @@ interface GrupoVigenciaEdicion {
                                       ></fa-icon>
                                     </button>
                                   </div>
+                                  @if (t.extendido) {
+                                    <select
+                                      class="select select-xs w-full"
+                                      [value]="t.diaSalidaId ?? ''"
+                                      (change)="
+                                        turnoGrupoSalidaDia(
+                                          gi,
+                                          d.diaId,
+                                          ti,
+                                          $event
+                                        )
+                                      "
+                                    >
+                                      <option [value]="''" disabled>
+                                        Día de salida
+                                      </option>
+                                      @for (sd of dias(); track sd.diaId) {
+                                        <option [value]="sd.diaId">
+                                          {{ sd.nombre }}
+                                        </option>
+                                      }
+                                    </select>
+                                  }
                                 </div>
                               }
 
@@ -414,6 +460,19 @@ interface GrupoVigenciaEdicion {
                       />
                       Extendido
                     </label>
+                    @if (turnoGrupal().extendido) {
+                      <label class="label">Día salida</label>
+                      <select
+                        class="select select-sm w-32"
+                        [value]="turnoGrupal().diaSalidaId ?? ''"
+                        (change)="turnoGrupalSalidaDia($event)"
+                      >
+                        <option [value]="''" disabled>Selecciona</option>
+                        @for (sd of dias(); track sd.diaId) {
+                          <option [value]="sd.diaId">{{ sd.nombre }}</option>
+                        }
+                      </select>
+                    }
                   </div>
 
                   <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
@@ -538,6 +597,24 @@ interface GrupoVigenciaEdicion {
                                   ></fa-icon>
                                 </button>
                               </div>
+                              @if (t.extendido) {
+                                <select
+                                  class="select select-xs w-full"
+                                  [value]="t.diaSalidaId ?? ''"
+                                  (change)="
+                                    turnoSalidaDia(d.diaId, $index, $event)
+                                  "
+                                >
+                                  <option [value]="''" disabled>
+                                    Día de salida
+                                  </option>
+                                  @for (sd of dias(); track sd.diaId) {
+                                    <option [value]="sd.diaId">
+                                      {{ sd.nombre }}
+                                    </option>
+                                  }
+                                </select>
+                              }
                             </div>
                           }
 
@@ -712,7 +789,10 @@ export default class HorarioFormPage {
       return activos.every(
         (d) =>
           d.turnos.length > 0 &&
-          d.turnos.every((t) => t.horaInicio && t.horaFin),
+          d.turnos.every(
+            (t) =>
+              t.horaInicio && t.horaFin && (!t.extendido || !!t.diaSalidaId),
+          ),
       );
     });
   });
@@ -741,7 +821,10 @@ export default class HorarioFormPage {
     }
     return activos.every((d) => {
       return (
-        d.turnos.length > 0 && d.turnos.every((t) => t.horaInicio && t.horaFin)
+        d.turnos.length > 0 &&
+        d.turnos.every(
+          (t) => t.horaInicio && t.horaFin && (!t.extendido || !!t.diaSalidaId),
+        )
       );
     });
   });
@@ -793,6 +876,9 @@ export default class HorarioFormPage {
             if (!t.horaInicio || !t.horaFin) {
               return `${etiqueta}, día ${d.nombre}: un turno tiene hora incompleta.`;
             }
+            if (t.extendido && !t.diaSalidaId) {
+              return `${etiqueta}, día ${d.nombre}: un turno extendido debe tener día de salida.`;
+            }
           }
         }
       }
@@ -809,6 +895,9 @@ export default class HorarioFormPage {
       for (const t of d.turnos) {
         if (!t.horaInicio || !t.horaFin) {
           return `Día ${d.nombre}: un turno tiene hora incompleta.`;
+        }
+        if (t.extendido && !t.diaSalidaId) {
+          return `Día ${d.nombre}: un turno extendido debe tener día de salida.`;
         }
       }
     }
@@ -944,6 +1033,18 @@ export default class HorarioFormPage {
     }));
   }
 
+  #normalizarTurnos(turnos: TurnoInput[]): TurnoInput[] {
+    return turnos.map((t) =>
+      t.extendido
+        ? t
+        : {
+            horaInicio: t.horaInicio,
+            horaFin: t.horaFin,
+            extendido: t.extendido,
+          },
+    );
+  }
+
   agregarGrupo(): void {
     this.grupos.update((lista) => [
       ...lista,
@@ -983,7 +1084,16 @@ export default class HorarioFormPage {
     this.grupos.update((lista) =>
       lista.map((g, i) =>
         i === index
-          ? { ...g, turnoGrupal: { ...g.turnoGrupal, [campo]: value } }
+          ? {
+              ...g,
+              turnoGrupal: {
+                ...g.turnoGrupal,
+                [campo]: value,
+                ...(campo === 'extendido' && !value
+                  ? { diaSalidaId: null }
+                  : {}),
+              },
+            }
           : g,
       ),
     );
@@ -992,6 +1102,23 @@ export default class HorarioFormPage {
   grupoTurnoGrupalValido(index: number): boolean {
     const g = this.grupos()[index];
     return !!g && !!g.turnoGrupal.horaInicio && !!g.turnoGrupal.horaFin;
+  }
+
+  grupoTurnoGrupalSalidaDia(index: number, event: Event): void {
+    const raw = (event.target as HTMLSelectElement).value;
+    this.grupos.update((lista) =>
+      lista.map((g, i) =>
+        i === index
+          ? {
+              ...g,
+              turnoGrupal: {
+                ...g.turnoGrupal,
+                diaSalidaId: raw ? Number(raw) : null,
+              },
+            }
+          : g,
+      ),
+    );
   }
 
   aplicarTurnoGrupalGrupo(index: number): void {
@@ -1047,6 +1174,7 @@ export default class HorarioFormPage {
   ): void {
     const target = event.target as HTMLInputElement;
     const value = campo === 'extendido' ? target.checked : target.value;
+    const limpiarSalida = campo === 'extendido' && !value;
     this.grupos.update((lista) =>
       lista.map((g, gi) =>
         gi === grupoIndex
@@ -1057,7 +1185,41 @@ export default class HorarioFormPage {
                   ? {
                       ...d,
                       turnos: d.turnos.map((t, ti) =>
-                        ti === turnoIndex ? { ...t, [campo]: value } : t,
+                        ti === turnoIndex
+                          ? limpiarSalida
+                            ? { ...t, extendido: false, diaSalidaId: null }
+                            : { ...t, [campo]: value }
+                          : t,
+                      ),
+                    }
+                  : d,
+              ),
+            }
+          : g,
+      ),
+    );
+  }
+
+  turnoGrupoSalidaDia(
+    grupoIndex: number,
+    diaId: number,
+    turnoIndex: number,
+    event: Event,
+  ): void {
+    const raw = (event.target as HTMLSelectElement).value;
+    this.grupos.update((lista) =>
+      lista.map((g, gi) =>
+        gi === grupoIndex
+          ? {
+              ...g,
+              dias: g.dias.map((d) =>
+                d.diaId === diaId
+                  ? {
+                      ...d,
+                      turnos: d.turnos.map((t, ti) =>
+                        ti === turnoIndex
+                          ? { ...t, diaSalidaId: raw ? Number(raw) : null }
+                          : t,
                       ),
                     }
                   : d,
@@ -1121,13 +1283,33 @@ export default class HorarioFormPage {
     const raw = (event.target as HTMLInputElement).value;
     const value =
       campo === 'extendido' ? (event.target as HTMLInputElement).checked : raw;
+    const limpiarSalida = campo === 'extendido' && !value;
     this.dias.update((lista) =>
       lista.map((d) => {
         if (d.diaId !== diaId) {
           return d;
         }
         const turnos = d.turnos.map((t, i) =>
-          i === index ? { ...t, [campo]: value } : t,
+          i === index
+            ? limpiarSalida
+              ? { ...t, extendido: false, diaSalidaId: null }
+              : { ...t, [campo]: value }
+            : t,
+        );
+        return { ...d, turnos };
+      }),
+    );
+  }
+
+  turnoSalidaDia(diaId: number, index: number, event: Event): void {
+    const raw = (event.target as HTMLSelectElement).value;
+    this.dias.update((lista) =>
+      lista.map((d) => {
+        if (d.diaId !== diaId) {
+          return d;
+        }
+        const turnos = d.turnos.map((t, i) =>
+          i === index ? { ...t, diaSalidaId: raw ? Number(raw) : null } : t,
         );
         return { ...d, turnos };
       }),
@@ -1163,7 +1345,19 @@ export default class HorarioFormPage {
   ): void {
     const target = event.target as HTMLInputElement;
     const value = campo === 'extendido' ? target.checked : target.value;
-    this.turnoGrupal.update((t) => ({ ...t, [campo]: value }));
+    this.turnoGrupal.update((t) => ({
+      ...t,
+      [campo]: value,
+      ...(campo === 'extendido' && !value ? { diaSalidaId: null } : {}),
+    }));
+  }
+
+  turnoGrupalSalidaDia(event: Event): void {
+    const raw = (event.target as HTMLSelectElement).value;
+    this.turnoGrupal.update((t) => ({
+      ...t,
+      diaSalidaId: raw ? Number(raw) : null,
+    }));
   }
 
   toggleDiaGrupal(diaId: number): void {
@@ -1203,6 +1397,7 @@ export default class HorarioFormPage {
                   horaInicio: t.horaInicio,
                   horaFin: t.horaFin,
                   extendido: t.extendido,
+                  diaSalidaId: t.diaSalidaId ?? null,
                 },
               ],
             }
@@ -1299,7 +1494,7 @@ export default class HorarioFormPage {
             .map((d, i) => ({
               diaId: d.diaId,
               orden: i + 1,
-              turnos: d.turnos,
+              turnos: this.#normalizarTurnos(d.turnos),
             })),
         }));
 
@@ -1320,7 +1515,7 @@ export default class HorarioFormPage {
       .map((d, i) => ({
         diaId: d.diaId,
         orden: i + 1,
-        turnos: d.turnos,
+        turnos: this.#normalizarTurnos(d.turnos),
       }));
 
     this.#crearHorario({

@@ -11,6 +11,7 @@ import {
   HorarioDetalle,
   OperationResult,
   OperationResultCreate,
+  TurnoDiaConectado,
   UsuarioHorario,
 } from '../core/interfaces/horario.interface';
 
@@ -60,6 +61,31 @@ export class HorariosService {
   listarUsuarios(id: number): Observable<UsuarioHorario[]> {
     return this.#http.get<UsuarioHorario[]>(
       `${this.#base}/horarios/${id}/usuarios`,
+    );
+  }
+
+  getTurnoDiaConectado(turnoId: number): Observable<TurnoDiaConectado[]> {
+    return this.#http.get<TurnoDiaConectado[]>(
+      `${this.#base}/turnos/${turnoId}/dia-conectado`,
+    );
+  }
+
+  crearDiaConectado(
+    turnoId: number,
+    diaId: number,
+  ): Observable<OperationResultCreate> {
+    return this.#http.post<OperationResultCreate>(
+      `${this.#base}/turnos/${turnoId}/dia-conectado`,
+      { diaId },
+    );
+  }
+
+  eliminarDiaConectado(
+    turnoId: number,
+    salidaTurnoDiaId: number,
+  ): Observable<OperationResult> {
+    return this.#http.delete<OperationResult>(
+      `${this.#base}/turnos/${turnoId}/dia-conectado/${salidaTurnoDiaId}`,
     );
   }
 
