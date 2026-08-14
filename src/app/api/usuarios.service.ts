@@ -5,12 +5,10 @@ import { Observable } from 'rxjs';
 import {
   ActualizarUsuarioDto,
   AsignarUsuariosDto,
-  CrearSyncUsuarioDto,
   OperationResult,
   SyncUsuario,
   Usuario,
 } from '../core/interfaces/usuario.interface';
-import { OperationResultCreate } from '../core/interfaces/unidad.interface';
 
 export interface UsuariosFiltro {
   activo?: boolean;
@@ -60,13 +58,6 @@ export class UsuariosService {
   listarSync(): Observable<SyncUsuario[]> {
     return this.#http.get<SyncUsuario[]>(
       `${this.#base}/usuarios/sync-usuarios`,
-    );
-  }
-
-  crearSyncUsuario(dto: CrearSyncUsuarioDto): Observable<OperationResultCreate> {
-    return this.#http.post<OperationResultCreate>(
-      `${this.#base}/usuarios/sync-usuarios`,
-      dto,
     );
   }
 

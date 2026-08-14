@@ -47,15 +47,6 @@ export interface AsignarUsuariosDto {
   syncUsuarios: SyncUsuarioInput[];
 }
 
-export interface CrearSyncUsuarioDto {
-  syncUsuarioId?: number | null;
-  usuario: string;
-  nombres?: string;
-  apellidos?: string;
-  tipo?: string;
-  dni?: string;
-}
-
 export interface CrearSyncUnidadDto {
   syncUnidadId?: number | null;
   codigo?: string;

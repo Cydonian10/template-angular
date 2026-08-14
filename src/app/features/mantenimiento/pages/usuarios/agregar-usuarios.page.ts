@@ -24,11 +24,7 @@ import {
 } from '../../../../core/interfaces/usuario.interface';
 
 interface SeleccionSync {
-  syncUsuarioId?: number | null;
-  usuario: string;
-  nombres?: string;
-  apellidos?: string;
-  dni?: string;
+  syncUsuarioId: number;
 }
 
 @Component({
@@ -92,66 +88,6 @@ interface SeleccionSync {
                 />
               </label>
             </fieldset>
-          </div>
-        </div>
-      </div>
-
-      <!-- ========== NUEVO USUARIO SYNC ========== -->
-      <div class="card bg-base-100 border border-base-300">
-        <div class="card-body gap-4">
-          <h2 class="card-title">Nuevo usuario sync</h2>
-
-          <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
-            <fieldset class="fieldset">
-              <legend class="fieldset-legend">Usuario *</legend>
-              <input
-                type="text"
-                class="input w-full"
-                placeholder="ej: jperez"
-                [value]="nuevoSync().usuario"
-                (input)="nuevoSyncCampo('usuario', $event)"
-              />
-            </fieldset>
-            <fieldset class="fieldset">
-              <legend class="fieldset-legend">Nombres</legend>
-              <input
-                type="text"
-                class="input w-full"
-                placeholder="Juan"
-                [value]="nuevoSync().nombres"
-                (input)="nuevoSyncCampo('nombres', $event)"
-              />
-            </fieldset>
-            <fieldset class="fieldset">
-              <legend class="fieldset-legend">Apellidos</legend>
-              <input
-                type="text"
-                class="input w-full"
-                placeholder="Perez"
-                [value]="nuevoSync().apellidos"
-                (input)="nuevoSyncCampo('apellidos', $event)"
-              />
-            </fieldset>
-            <fieldset class="fieldset">
-              <legend class="fieldset-legend">DNI</legend>
-              <input
-                type="text"
-                class="input w-full"
-                placeholder="20010001"
-                [value]="nuevoSync().dni"
-                (input)="nuevoSyncCampo('dni', $event)"
-              />
-            </fieldset>
-            <div class="flex items-end">
-              <button
-                class="btn btn-outline w-full"
-                [disabled]="!nuevoSync().usuario.trim()"
-                (click)="agregarNuevoSync()"
-              >
-                <fa-icon [icon]="iconService.faPlus"></fa-icon>
-                Agregar a selección
-              </button>
-            </div>
           </div>
         </div>
       </div>
@@ -260,12 +196,6 @@ export default class AgregarUsuariosPage {
   public busquedaSync = signal('');
   public seleccionados = signal<SeleccionSync[]>([]);
   public ocupadosEnUnidad = signal<Set<number>>(new Set());
-  public nuevoSync = signal<{
-    usuario: string;
-    nombres: string;
-    apellidos: string;
-    dni: string;
-  }>({ usuario: '', nombres: '', apellidos: '', dni: '' });
   public loadingSync = signal(false);
   public loading = signal(false);
 
@@ -337,30 +267,13 @@ export default class AgregarUsuariosPage {
     this.busquedaSync.set((event.target as HTMLInputElement).value);
   }
 
-  nuevoSyncCampo(
-    campo: 'usuario' | 'nombres' | 'apellidos' | 'dni',
-    event: Event,
-  ): void {
-    const value = (event.target as HTMLInputElement).value;
-    this.nuevoSync.update((n) => ({ ...n, [campo]: value }));
-  }
-
   toggle(s: SyncUsuario): void {
     this.seleccionados.update((sel) => {
       const existe = sel.some((x) => x.syncUsuarioId === s.syncUsuarioId);
       if (existe) {
         return sel.filter((x) => x.syncUsuarioId !== s.syncUsuarioId);
       }
-      return [
-        ...sel,
-        {
-          syncUsuarioId: s.syncUsuarioId,
-          usuario: s.usuario,
-          nombres: s.nombres ?? undefined,
-          apellidos: s.apellidos ?? undefined,
-          dni: s.dni ?? undefined,
-        },
-      ];
+      return [...sel, { syncUsuarioId: s.syncUsuarioId }];
     });
   }
 
@@ -372,23 +285,6 @@ export default class AgregarUsuariosPage {
     return this.seleccionados().some(
       (x) => x.syncUsuarioId === syncUsuarioId,
     );
-  }
-
-  agregarNuevoSync(): void {
-    const n = this.nuevoSync();
-    if (!n.usuario.trim()) {
-      return;
-    }
-    this.seleccionados.update((sel) => [
-      ...sel,
-      {
-        usuario: n.usuario.trim(),
-        nombres: n.nombres.trim() || undefined,
-        apellidos: n.apellidos.trim() || undefined,
-        dni: n.dni.trim() || undefined,
-      },
-    ]);
-    this.nuevoSync.set({ usuario: '', nombres: '', apellidos: '', dni: '' });
   }
 
   agregar(): void {
