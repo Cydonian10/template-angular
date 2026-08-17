@@ -1,12 +1,11 @@
 import { Component, inject } from '@angular/core';
-import { DIALOG_DATA, DialogRef } from '@angular/cdk/dialog';
+import { Dialog, DIALOG_DATA, DialogRef } from '@angular/cdk/dialog';
 
 export interface ConfirmarDialogData {
   titulo: string;
   mensaje: string;
   textoConfirmar?: string;
   textoCancelar?: string;
-  tipoConfirmar?: 'primary' | 'error' | 'warning';
 }
 
 export interface ConfirmarDialogResult {
@@ -28,13 +27,7 @@ export interface ConfirmarDialogResult {
           <button type="button" class="btn btn-ghost" (click)="cancelar()">
             {{ data.textoCancelar ?? 'Cancelar' }}
           </button>
-          <button
-            class="btn"
-            [class.btn-primary]="(data.tipoConfirmar ?? 'primary') === 'primary'"
-            [class.btn-error]="data.tipoConfirmar === 'error'"
-            [class.btn-warning]="data.tipoConfirmar === 'warning'"
-            (click)="confirmar()"
-          >
+          <button class="btn btn-error" (click)="confirmar()">
             {{ data.textoConfirmar ?? 'Confirmar' }}
           </button>
         </div>
@@ -53,4 +46,15 @@ export default class ConfirmarDialog {
   cancelar(): void {
     this.#dialogRef.close({ confirmado: false });
   }
+}
+
+export function abrirConfirmarDialog(
+  dialog: Dialog,
+  data: ConfirmarDialogData,
+): DialogRef<ConfirmarDialogResult> {
+  return dialog.open<ConfirmarDialogResult>(ConfirmarDialog, {
+    data,
+    disableClose: true,
+    width: '420px',
+  });
 }

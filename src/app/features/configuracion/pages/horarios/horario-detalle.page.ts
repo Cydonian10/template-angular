@@ -14,6 +14,7 @@ import AsignarUsuariosDialog, {
   AsignarUsuariosDialogResult,
 } from './components/asignar-usuarios.dialog.ng';
 import ConfirmarDialog, {
+  abrirConfirmarDialog,
   ConfirmarDialogData,
   ConfirmarDialogResult,
 } from '../../../../shared/dialogs/confirmar.dialog.ng';
@@ -389,16 +390,13 @@ export default class HorarioDetallePage {
     if (!horarioId) {
       return;
     }
-    const ref = this.#dialog.open<ConfirmarDialogResult>(ConfirmarDialog, {
-      data: {
-        titulo: 'Desasignar usuario',
-        mensaje: `¿Seguro que deseas desasignar a ${u.nombres} ${u.apellidos} del horario?`,
-        textoConfirmar: 'Desasignar',
-        tipoConfirmar: 'error',
-      } as ConfirmarDialogData,
-      disableClose: true,
-      width: '420px',
+
+    const ref = abrirConfirmarDialog(this.#dialog, {
+      titulo: 'Desasignar usuario',
+      mensaje: `¿Seguro que deseas desasignar a ${u.nombres} ${u.apellidos} del horario?`,
+      textoConfirmar: 'Desasignar',
     });
+
     ref.closed
       .pipe(takeUntilDestroyed(this.#destroyRef))
       .subscribe((result) => {
