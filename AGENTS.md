@@ -2,33 +2,39 @@
 
 ## Proyecto
 
-- Es una aplicación Angular 19 standalone; el punto de entrada es `src/main.ts` y las rutas principales están en `src/app/app.routes.ts`.
-- Las funcionalidades viven en `src/app/features`; los servicios HTTP están en `src/app/api` y los contratos TypeScript en `src/app/core/interfaces`.
-- El backend está en el repositorio hermano `../api-scap`; los cambios de procedimientos SQL o API deben hacerse allí, no en este frontend.
-- El frontend consume `http://localhost:3005/scap` y seguridad `http://localhost:3004/api_seguridad` en desarrollo, según `src/environments/environment.development.ts`.
+- Aplicación Angular 19 standalone. Punto de entrada: `src/main.ts`. Rutas principales: `src/app/app.routes.ts`.
+- Funcionalidades en `src/app/features`; servicios HTTP en `src/app/api`; contratos TypeScript en `src/app/core/interfaces`.
+- Backend hermano: `../api-scap`. Los cambios de procedimientos SQL o de rutas/payloads API deben hacerse allí, no en este frontend.
 
 ## Comandos
 
-- Instalar dependencias con `npm install` usando el `package-lock.json`.
-- Servidor de desarrollo: `npm start` (`ng serve`), con recarga automática.
-- Build de producción: `npm run build` (`ng build`). El resultado se configura en `/var/www/html/scap` y usa `baseHref: /scap/`.
-- Build de desarrollo: `npm run watch`.
-- Pruebas unitarias Karma/Jasmine: `npm test` (`ng test`). No hay script ni configuración e2e propia en este repositorio.
-- No existen scripts de lint, typecheck o format; `npm run build` es la verificación principal y usa TypeScript estricto y templates Angular estrictos.
+- `npm install` — usar el `package-lock.json` existente.
+- `npm start` — `ng serve` en modo desarrollo, puerto **4210**, recarga automática.
+- `npm run build` — build de producción. Salida: `/var/www/html/scap` con `baseHref: /scap/`. Puede advertir por budget (1.5 MB warning / 2 MB error) pero compila.
+- `npm run watch` — build de desarrollo con `--watch`.
+- `npm test` — Karma/Jasmine. Solo existe `src/app/app.component.spec.ts`; no hay suite propia ni configuración e2e.
+- **No hay scripts de lint, typecheck ni format.** `npm run build` es la verificación principal.
 
-## UI y estilo
+## Configuración y estilo
 
-- Los estilos globales usan Tailwind CSS 4 con daisyUI 5 en `src/styles.css`; conservar el tema `ingenieria` y sus tokens al modificar la interfaz.
-- Los componentes suelen usar templates inline, signals y componentes standalone; conserva los patrones existentes antes de introducir otra arquitectura.
+- TypeScript estricto y `strictTemplates` activados en `tsconfig.json`.
+- Tailwind CSS 4 y daisyUI 5 se configuran directamente en `src/styles.css`; **no hay** `tailwind.config.*`. El tema por defecto es el custom `ingenieria`; conservar sus tokens si se toca la UI.
+- Patrón dominante: componentes standalone, templates inline, signals y `inject()`.
+- Diálogos reutilizables en `src/app/shared/dialogs` usan `@angular/cdk/dialog`.
 
-## Base de datos y backend
+## Autenticación y entornos
 
-- `opencode.json` configura el MCP SQL Server con base predeterminada `master`; no asumas que esa es la base de la aplicación. El backend usa su propia configuración y normalmente apunta a `API_SCAP_DB`.
-- Antes de ejecutar o diagnosticar SQL, confirma la base seleccionada y valida el esquema real de esa base; `master` puede contener tablas con columnas distintas.
-- Los procedimientos SQL están en `../api-scap/database/sql-scripts`; después de editarlos hay que ejecutar el script `CREATE OR ALTER` en la base correcta para que el endpoint use la versión actualizada.
+- En desarrollo (`src/environments/environment.development.ts` → `requireAuth: false`), `authGuard` permite el acceso y carga un usuario de prueba hardcodeado.
+- En producción, el guarda espera `token`/`refreshToken` en query params o `localStorage` y llama a `AuthService.profile()` / `refreshToken()`.
+- **Gocha:** los servicios y el guarda importan directamente `environment.development.ts`; `environment.ts` está vacío. Cambios de URLs deben hacerse en `environment.development.ts`.
+
+## Backend y base de datos
+
+- `opencode.json` configura el MCP SQL Server apuntando a `API_SCAP_DB` y una referencia a `../api-scap`.
+- Antes de ejecutar o diagnosticar SQL, confirma la base seleccionada y valida el esquema real de esa base.
+- Los procedimientos SQL están en `../api-scap/database/sql-scripts`; después de editarlos hay que ejecutar el `CREATE OR ALTER` en la base correcta para que el endpoint use la versión actualizada.
 - Los usuarios sincronizados deben provenir del proceso backend/kafka; no reintroducir en la interfaz formularios o endpoints para crear manualmente `sync_usuario`.
 
 ## Verificación
 
-- Tras cambios de TypeScript, templates o estilos, ejecutar `npm run build`.
-- Tras cambios de servicios o contratos HTTP, revisar también los procedimientos y rutas correspondientes en `../api-scap` si cambia el payload o endpoint.
+- Tras cambios de TypeScript, templates o estilos: `npm run build`.
