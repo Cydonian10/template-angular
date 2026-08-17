@@ -202,17 +202,21 @@ interface MatrizSemana {
                         <td>{{ u.nombres }} {{ u.apellidos }}</td>
                         <td>{{ formatFecha(u.fechaInicio) }}</td>
                         <td>{{ formatFecha(u.fechaFin) || 'Indefinida' }}</td>
-                        <td class="text-end">
-                          <button
-                            class="btn btn-xs btn-outline btn-error"
-                            [disabled]="
-                              desasignando() === u.horarioAsignacionId
-                            "
-                            (click)="desasignar(u)"
-                            aria-label="Desasignar usuario"
-                          >
-                            <fa-icon [icon]="iconService.faUserMinus"></fa-icon>
-                          </button>
+                        <td class="text-center">
+                          <div class="tooltip" data-tip="Quitar horario">
+                            <button
+                              class="btn btn-xs btn-outline btn-error"
+                              [disabled]="
+                                desasignando() === u.horarioAsignacionId
+                              "
+                              (click)="desasignar(u)"
+                              aria-label="Desasignar usuario"
+                            >
+                              <fa-icon
+                                [icon]="iconService.faUserMinus"
+                              ></fa-icon>
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     }

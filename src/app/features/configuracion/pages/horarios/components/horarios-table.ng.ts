@@ -56,28 +56,37 @@ import { Unidad } from '../../../../../core/interfaces/unidad.interface';
                     </td>
                     <td>{{ h.horasLaborales }}</td>
                     <td class="text-end">
-                      <div class="flex justify-end gap-1">
-                        <button
-                          class="btn btn-xs btn-outline"
-                          (click)="ver.emit(h)"
-                          aria-label="Ver detalle"
+                      <div class="flex justify-center  gap-1">
+                        <div class="tooltip" data-tip="Ver detalle">
+                          <button
+                            class="btn btn-xs btn-outline"
+                            (click)="ver.emit(h)"
+                            aria-label="Ver detalle"
+                          >
+                            <fa-icon [icon]="iconService.faEye"></fa-icon>
+                          </button>
+                        </div>
+                        <div class="tooltip" data-tip="Editar horario">
+                          <button
+                            class="btn btn-xs btn-outline"
+                            (click)="editar.emit(h)"
+                            aria-label="Editar horario"
+                          >
+                            <fa-icon [icon]="iconService.faEdit"></fa-icon>
+                          </button>
+                        </div>
+                        <div
+                          class="tooltip tooltip-error"
+                          data-tip="Eliminar horario"
                         >
-                          <fa-icon [icon]="iconService.faEye"></fa-icon>
-                        </button>
-                        <button
-                          class="btn btn-xs btn-outline"
-                          (click)="editar.emit(h)"
-                          aria-label="Editar horario"
-                        >
-                          <fa-icon [icon]="iconService.faEdit"></fa-icon>
-                        </button>
-                        <button
-                          class="btn btn-xs btn-outline btn-error"
-                          (click)="eliminar.emit(h)"
-                          aria-label="Eliminar horario"
-                        >
-                          <fa-icon [icon]="iconService.faTrash"></fa-icon>
-                        </button>
+                          <button
+                            class="btn btn-xs btn-outline btn-error"
+                            (click)="eliminar.emit(h)"
+                            aria-label="Eliminar horario"
+                          >
+                            <fa-icon [icon]="iconService.faTrash"></fa-icon>
+                          </button>
+                        </div>
                       </div>
                     </td>
                   </tr>
@@ -101,8 +110,6 @@ export default class HorariosTable {
   public eliminar = output<Horario>();
 
   unidadNombre(unidadId: number): string | null {
-    return (
-      this.unidades().find((u) => u.unidadId === unidadId)?.nombre ?? null
-    );
+    return this.unidades().find((u) => u.unidadId === unidadId)?.nombre ?? null;
   }
 }
