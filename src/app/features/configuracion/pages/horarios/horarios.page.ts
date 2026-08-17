@@ -1,4 +1,5 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, DestroyRef, inject, signal } from '@angular/core';
+import { Dialog } from '@angular/cdk/dialog';
 import {
   BehaviorSubject,
   EMPTY,
@@ -15,6 +16,7 @@ import { FontIconService } from '../../../../core/services/icon.service';
 import { HorariosService } from '../../../../api/horarios.service';
 import { UnidadesService } from '../../../../api/unidades.service';
 import { AreasService } from '../../../../api/areas.service';
+import { abrirConfirmarDialog } from '../../../../shared/dialogs/confirmar.dialog.ng';
 import BreadcrumbsNg from '../../../../layout/breadcrumbs/breadcrumbs.ng';
 import HorariosTable from './components/horarios-table.ng';
 import {
@@ -24,7 +26,6 @@ import {
 import { Unidad } from '../../../../core/interfaces/unidad.interface';
 import { Area } from '../../../../core/interfaces/area.interface';
 import { Router } from '@angular/router';
-import { DestroyRef } from '@angular/core';
 
 interface FiltroHorarios {
   areaId?: number;
@@ -46,27 +47,6 @@ interface FiltroHorarios {
           Nuevo horario
         </button>
       </div>
-
-      <!-- ========== CONFIRMACIÓN DE ELIMINACIÓN ========== -->
-      @if (confirmarEliminar(); as h) {
-        <div class="modal modal-open">
-          <div class="modal-box">
-            <h3 class="text-lg font-bold">Eliminar horario</h3>
-            <p class="py-4">
-              ¿Seguro que deseas eliminar <strong>{{ h.nombre }}</strong
-              >?
-            </p>
-            <div class="modal-action">
-              <button class="btn btn-ghost" (click)="cancelarEliminar()">
-                Cancelar
-              </button>
-              <button class="btn btn-error" (click)="confirmarEliminacion()">
-                Eliminar
-              </button>
-            </div>
-          </div>
-        </div>
-      }
 
       <!-- ========== FILTROS ========== -->
       <div class="flex flex-wrap items-end gap-3">
@@ -128,10 +108,10 @@ export default class HorariosPage {
   #toastr = inject(ToastrService);
   #router = inject(Router);
   #destroyRef = inject(DestroyRef);
+  #dialog = inject(Dialog);
 
   public loading = signal(false);
   public unidadIdFiltro = signal<number | undefined>(undefined);
-  public confirmarEliminar = signal<Horario | null>(null);
 
   #filtros$ = new BehaviorSubject<FiltroHorarios>({});
 
@@ -178,37 +158,37 @@ export default class HorariosPage {
   }
 
   pedirEliminar(horario: Horario): void {
-    this.confirmarEliminar.set(horario);
-  }
+    const ref = abrirConfirmarDialog(this.#dialog, {
+      titulo: 'Eliminar horario',
+      mensaje: `¿Seguro que deseas eliminar ${horario.nombre}?`,
+      textoConfirmar: 'Eliminar',
+    });
 
-  cancelarEliminar(): void {
-    this.confirmarEliminar.set(null);
-  }
-
-  confirmarEliminacion(): void {
-    const horario = this.confirmarEliminar();
-    if (!horario) {
-      return;
-    }
-    this.confirmarEliminar.set(null);
-    this.#horariosService
-      .eliminar(horario.horarioId)
-      .pipe(
-        takeUntilDestroyed(this.#destroyRef),
-        tap((res) => this.procesarResultado(res)),
-        tap((res) => {
-          if (res.State === 1) {
-            this.horarios.update((lista) =>
-              lista.filter((h) => h.horarioId !== horario.horarioId),
-            );
-          }
-        }),
-        catchError(() => {
-          this.#toastr.error('Error al eliminar el horario');
-          return EMPTY;
-        }),
-      )
-      .subscribe();
+    ref.closed
+      .pipe(takeUntilDestroyed(this.#destroyRef))
+      .subscribe((result) => {
+        if (!result?.confirmado) {
+          return;
+        }
+        this.#horariosService
+          .eliminar(horario.horarioId)
+          .pipe(
+            takeUntilDestroyed(this.#destroyRef),
+            tap((res) => this.procesarResultado(res)),
+            tap((res) => {
+              if (res.State === 1) {
+                this.horarios.update((lista) =>
+                  lista.filter((h) => h.horarioId !== horario.horarioId),
+                );
+              }
+            }),
+            catchError(() => {
+              this.#toastr.error('Error al eliminar el horario');
+              return EMPTY;
+            }),
+          )
+          .subscribe();
+      });
   }
 
   cambiarUnidad(event: Event): void {
