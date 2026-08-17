@@ -114,10 +114,10 @@ export class DashboardService {
         },
         {
           menuId: 2390,
-          menu: 'Asignar horario',
+          menu: 'Horarios',
           orden: 3,
           icon: 'fas fa-mug-saucer',
-          url: '/configuracion/horario-2',
+          url: '/configuracion/horarios',
           moduloId: 2071,
           externo: false,
           permisos: [],

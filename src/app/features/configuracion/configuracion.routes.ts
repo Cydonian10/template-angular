@@ -6,7 +6,7 @@ import { Routes } from '@angular/router';
 
 const configuracionRoutes: Routes = [
   {
-    path: 'horario-2',
+    path: 'horarios',
     data: { breadcrumb: 'Horarios' },
     children: [
       {
@@ -17,20 +17,17 @@ const configuracionRoutes: Routes = [
       {
         path: 'nuevo',
         data: { breadcrumb: 'Nuevo horario' },
-        loadComponent: () =>
-          import('./pages/horarios/horario-form.page'),
+        loadComponent: () => import('./pages/horarios/horario-form.page'),
       },
       {
         path: ':id/editar',
         data: { breadcrumb: 'Editar horario' },
-        loadComponent: () =>
-          import('./pages/horarios/horario-form.page'),
+        loadComponent: () => import('./pages/horarios/horario-form.page'),
       },
       {
         path: ':id',
         data: { breadcrumb: 'Detalle de horario' },
-        loadComponent: () =>
-          import('./pages/horarios/horario-detalle.page'),
+        loadComponent: () => import('./pages/horarios/horario-detalle.page'),
       },
     ],
   },
