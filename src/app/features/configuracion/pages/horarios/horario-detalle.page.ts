@@ -57,7 +57,7 @@ interface MatrizSemana {
         <h1 class="text-2xl font-bold">{{ detalle()?.nombre }}</h1>
 
         <div class="flex items-center gap-2">
-          <a class="btn btn-ghost" routerLink="/configuracion/horario-2">
+          <a class="btn btn-ghost" routerLink="/configuracion/horarios">
             <fa-icon [icon]="iconService.faArrowLeft"></fa-icon>
             Volver
           </a>

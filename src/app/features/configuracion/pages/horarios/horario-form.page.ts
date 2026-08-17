@@ -272,7 +272,9 @@ interface GrupoVigenciaEdicion {
                               type="checkbox"
                               class="checkbox checkbox-xs"
                               [checked]="g.turnoGrupal.extendido"
-                              (change)="grupoTurnoGrupal(gi, 'extendido', $event)"
+                              (change)="
+                                grupoTurnoGrupal(gi, 'extendido', $event)
+                              "
                             />
                             Extendido
                           </label>
@@ -370,36 +372,36 @@ interface GrupoVigenciaEdicion {
                                       )
                                     "
                                   />
-                                    <div
-                                      class="flex items-center justify-between"
-                                    >
-                                      @if (extendidoTipo() || rotativo()) {
-                                        <label
-                                          class="flex items-center gap-1 text-[10px]"
-                                        >
-                                          <input
-                                            type="checkbox"
-                                            class="checkbox checkbox-xs"
-                                            [checked]="t.extendido"
-                                            (change)="
-                                              turnoGrupoCampo(
-                                                gi,
-                                                d.diaId,
-                                                ti,
-                                                'extendido',
-                                                $event
-                                              )
-                                            "
-                                          />
-                                          Ext
-                                        </label>
-                                      }
-                                      <button
-                                        type="button"
-                                        class="btn btn-xs btn-ghost btn-error px-1"
-                                        (click)="
-                                          quitarTurnoGrupo(gi, d.diaId, ti)
-                                        "
+                                  <div
+                                    class="flex items-center justify-between"
+                                  >
+                                    @if (extendidoTipo() || rotativo()) {
+                                      <label
+                                        class="flex items-center gap-1 text-[10px]"
+                                      >
+                                        <input
+                                          type="checkbox"
+                                          class="checkbox checkbox-xs"
+                                          [checked]="t.extendido"
+                                          (change)="
+                                            turnoGrupoCampo(
+                                              gi,
+                                              d.diaId,
+                                              ti,
+                                              'extendido',
+                                              $event
+                                            )
+                                          "
+                                        />
+                                        Ext
+                                      </label>
+                                    }
+                                    <button
+                                      type="button"
+                                      class="btn btn-xs btn-ghost btn-error px-1"
+                                      (click)="
+                                        quitarTurnoGrupo(gi, d.diaId, ti)
+                                      "
                                     >
                                       <fa-icon
                                         [icon]="iconService.faTrash"
@@ -648,7 +650,9 @@ interface GrupoVigenciaEdicion {
                                   ></fa-icon>
                                 </button>
                               </div>
-                              @if ((extendidoTipo() || rotativo()) && t.extendido) {
+                              @if (
+                                (extendidoTipo() || rotativo()) && t.extendido
+                              ) {
                                 <select
                                   class="select select-xs w-full"
                                   [value]="t.diaSalidaId ?? ''"
@@ -1740,6 +1744,6 @@ export default class HorarioFormPage {
   }
 
   volver(): void {
-    this.#router.navigate(['/configuracion/horario-2']);
+    this.#router.navigate(['/configuracion/horarios']);
   }
 }

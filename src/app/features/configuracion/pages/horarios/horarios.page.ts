@@ -147,14 +147,14 @@ export default class HorariosPage {
 
   abrirEditar(horario: Horario): void {
     this.#router.navigate([
-      '/configuracion/horario-2',
+      '/configuracion/horarios',
       horario.horarioId,
       'editar',
     ]);
   }
 
   verDetalle(horario: Horario): void {
-    this.#router.navigate(['/configuracion/horario-2', horario.horarioId]);
+    this.#router.navigate(['/configuracion/horarios', horario.horarioId]);
   }
 
   pedirEliminar(horario: Horario): void {
