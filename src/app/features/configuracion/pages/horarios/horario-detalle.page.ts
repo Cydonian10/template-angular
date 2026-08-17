@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, DestroyRef, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Dialog } from '@angular/cdk/dialog';
@@ -224,6 +224,7 @@ interface MatrizSemana {
 })
 export default class HorarioDetallePage {
   public iconService = inject(FontIconService);
+  #destroyRef = inject(DestroyRef);
   #horariosService = inject(HorariosService);
   #route = inject(ActivatedRoute);
   #dialog = inject(Dialog);
@@ -319,7 +320,7 @@ export default class HorarioDetallePage {
     this.#horariosService
       .obtenerPorId(this.horarioId)
       .pipe(
-        takeUntilDestroyed(),
+        takeUntilDestroyed(this.#destroyRef),
         catchError(() => {
           this.#toastr.error('No se pudo cargar el horario');
           return EMPTY;
@@ -346,7 +347,7 @@ export default class HorarioDetallePage {
       },
     );
     ref.closed
-      .pipe(takeUntilDestroyed())
+      .pipe(takeUntilDestroyed(this.#destroyRef))
       .subscribe((result) => {
         if (!result) {
           return;
@@ -358,7 +359,7 @@ export default class HorarioDetallePage {
             fechaFin: result.fechaFin,
           })
           .pipe(
-            takeUntilDestroyed(),
+            takeUntilDestroyed(this.#destroyRef),
             tap((res) => this.procesarResultado(res)),
             tap((res) => {
               if (res.State === 1) {
@@ -387,7 +388,7 @@ export default class HorarioDetallePage {
     this.#horariosService
       .desasignarUsuario(this.horarioId, u.usuarioId)
       .pipe(
-        takeUntilDestroyed(),
+        takeUntilDestroyed(this.#destroyRef),
         tap((res) => this.procesarResultado(res)),
         tap((res) => {
           if (res.State === 1) {
