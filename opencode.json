@@ -10,7 +10,7 @@
         "SQLSERVER_PORT": "1438",
         "SQLSERVER_USER": "sa",
         "SQLSERVER_PASSWORD": "Desser2bdtest",
-        "SQLSERVER_DATABASE": "master",
+        "SQLSERVER_DATABASE": "API_SCAP_DB",
         "SQLSERVER_ENCRYPT": "false",
         "SQLSERVER_TRUST_CERT": "true",
         "SQLSERVER_MAX_ROWS": "1000"
