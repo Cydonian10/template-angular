@@ -13,10 +13,15 @@ import AsignarUsuariosDialog, {
   AsignarUsuariosDialogData,
   AsignarUsuariosDialogResult,
 } from './components/asignar-usuarios.dialog.ng';
+import ConfirmarDialog, {
+  ConfirmarDialogData,
+  ConfirmarDialogResult,
+} from '../../../../shared/dialogs/confirmar.dialog.ng';
 import {
   HorarioDetalle,
   HorarioTurno,
   OperationResult,
+  UsuarioHorario,
 } from '../../../../core/interfaces/horario.interface';
 
 interface TurnoMatriz {
@@ -123,7 +128,9 @@ interface MatrizSemana {
                         @for (t of c.turnos; track $index) {
                           <div
                             class="rounded bg-base-200 px-1 py-0.5 text-center font-mono text-xs"
-                            [class]="t.extendido ? 'bg-warning/20 text-warning' : ''"
+                            [class]="
+                              t.extendido ? 'bg-warning/20 text-warning' : ''
+                            "
                             title="Turno extendido"
                           >
                             {{ t.horaInicio }} - {{ t.horaFin }}
@@ -197,13 +204,13 @@ interface MatrizSemana {
                         <td class="text-end">
                           <button
                             class="btn btn-xs btn-outline btn-error"
-                            [disabled]="desasignando() === u.horarioAsignacionId"
+                            [disabled]="
+                              desasignando() === u.horarioAsignacionId
+                            "
                             (click)="desasignar(u)"
                             aria-label="Desasignar usuario"
                           >
-                            <fa-icon
-                              [icon]="iconService.faUserMinus"
-                            ></fa-icon>
+                            <fa-icon [icon]="iconService.faUserMinus"></fa-icon>
                           </button>
                         </td>
                       </tr>
@@ -294,7 +301,9 @@ export default class HorarioDetallePage {
     if (!turno.horaInicio || !turno.horaFin) {
       return 0;
     }
-    const inicio = new Date(`1970-01-01T${this.#formatHora(turno.horaInicio)}:00Z`);
+    const inicio = new Date(
+      `1970-01-01T${this.#formatHora(turno.horaInicio)}:00Z`,
+    );
     let fin = new Date(`1970-01-01T${this.#formatHora(turno.horaFin)}:00Z`);
     if (turno.extendido || fin <= inicio) {
       fin = new Date(fin.getTime() + 24 * 60 * 60 * 1000);
@@ -375,33 +384,46 @@ export default class HorarioDetallePage {
       });
   }
 
-  desasignar(u: {
-    horarioAsignacionId: number;
-    usuarioId: number;
-    nombres: string;
-    apellidos: string;
-  }): void {
-    if (!this.horarioId) {
+  desasignar(u: UsuarioHorario): void {
+    const horarioId = this.horarioId;
+    if (!horarioId) {
       return;
     }
-    this.desasignando.set(u.horarioAsignacionId);
-    this.#horariosService
-      .desasignarUsuario(this.horarioId, u.usuarioId)
-      .pipe(
-        takeUntilDestroyed(this.#destroyRef),
-        tap((res) => this.procesarResultado(res)),
-        tap((res) => {
-          if (res.State === 1) {
-            this.cargar();
-          }
-        }),
-        catchError(() => {
-          this.#toastr.error('Error al desasignar el usuario');
-          return EMPTY;
-        }),
-        finalize(() => this.desasignando.set(null)),
-      )
-      .subscribe();
+    const ref = this.#dialog.open<ConfirmarDialogResult>(ConfirmarDialog, {
+      data: {
+        titulo: 'Desasignar usuario',
+        mensaje: `¿Seguro que deseas desasignar a ${u.nombres} ${u.apellidos} del horario?`,
+        textoConfirmar: 'Desasignar',
+        tipoConfirmar: 'error',
+      } as ConfirmarDialogData,
+      disableClose: true,
+      width: '420px',
+    });
+    ref.closed
+      .pipe(takeUntilDestroyed(this.#destroyRef))
+      .subscribe((result) => {
+        if (!result?.confirmado) {
+          return;
+        }
+        this.desasignando.set(u.horarioAsignacionId);
+        this.#horariosService
+          .desasignarUsuario(horarioId, u.usuarioId)
+          .pipe(
+            takeUntilDestroyed(this.#destroyRef),
+            tap((res) => this.procesarResultado(res)),
+            tap((res) => {
+              if (res.State === 1) {
+                this.cargar();
+              }
+            }),
+            catchError(() => {
+              this.#toastr.error('Error al desasignar el usuario');
+              return EMPTY;
+            }),
+            finalize(() => this.desasignando.set(null)),
+          )
+          .subscribe();
+      });
   }
 
   private procesarResultado(res: OperationResult): void {
