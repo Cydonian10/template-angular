@@ -16,7 +16,7 @@
 - Modal de crear/editar biométrico con campos: marca, nombre, IP, serie, ubicación, tarjeta, huella y rostro.
 - Modal de marcas con tabla (nombre, tipoDB, detalle) y acciones crear, editar y eliminar.
 - Eliminación con diálogo de confirmación para biométricos y marcas.
-- Servicios HTTP nuevos: `biometricos.service.ts` y contratos en `core/interfaces/biometrico.interface.ts`.
+- Servicios HTTP nuevos: `biometricos.service.ts` (biométricos) y `marca-biometrico.service.ts` (marcas), con contratos en `core/interfaces/biometrico.interface.ts`.
 - Ruta `/configuracion/biometricos` en `configuracion.routes.ts`.
 - Solo consumo de la API existente de `api-scap` (`/biometrico` y `/marca-biometrico`).
 
@@ -102,7 +102,7 @@ Convenciones:
 ## Implementation plan
 
 1. Crear `src/app/core/interfaces/biometrico.interface.ts` con los contratos del modelo de datos.
-2. Crear `src/app/api/biometricos.service.ts` con los métodos `listarBiometricos`, `crearBiometrico`, `actualizarBiometrico`, `eliminarBiometrico`, `listarMarcas`, `crearMarca`, `actualizarMarca` y `eliminarMarca`.
+2. Crear `src/app/api/biometricos.service.ts` con los métodos `listarBiometricos`, `crearBiometrico`, `actualizarBiometrico` y `eliminarBiometrico`, y `src/app/api/marca-biometrico.service.ts` con `listarMarcas`, `crearMarca`, `actualizarMarca` y `eliminarMarca`.
 3. Agregar en `configuracion.routes.ts` la ruta `biometricos` que carga la página (inicialmente vacía con breadcrumb "Biométricos").
 4. Implementar `biometricos.page.ts`: carga biométricos y marcas, tabla con paginación en frontend y búsqueda local.
 5. Crear el modal de marcas (`marcas.dialog.ng.ts`): tabla con nombre, tipoDB y detalle; botones "Nueva marca", editar y eliminar (con confirmación); al cambiar la lista se refresca el selector del formulario de biométrico.
@@ -137,6 +137,7 @@ Convenciones:
 - **Yes:** Paginación y búsqueda en frontend. La API devuelve la lista completa y el proyecto ya tiene `PaginadorDataSource`; no se pide paginación al backend.
 - **Yes:** Crear/editar biométrico mediante modal (patrón de diálogos `@angular/cdk/dialog` del proyecto).
 - **Yes:** Modal de marcas con CRUD completo dentro de la página. El backend ya expone las rutas y el usuario lo prefirió a un menú separado en Mantenimiento.
+- **Yes:** Dos servicios separados: `biometricos.service.ts` (biométricos) y `marca-biometrico.service.ts` (marcas). Cada entidad con su propio servicio, alineado con la separación de módulos del backend.
 - **Yes:** Contratos e interfaces nuevos en `core/interfaces/biometrico.interface.ts` siguiendo la convención del proyecto.
 - **No:** Menú separado `Mantenimiento > Marcas`. Se concentra todo en `Configuración > Biométricos`.
 - **No:** Cambios en `api-scap`. El CRUD ya está implementado (SPEC 01 del backend, estado Implementado).
