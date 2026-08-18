@@ -111,4 +111,13 @@ export class HorariosService {
       `${this.#base}/horarios/${id}/usuarios/${usuarioId}`,
     );
   }
+
+  culminarAsignacion(
+    horarioAsignacionId: number,
+  ): Observable<OperationResult> {
+    return this.#http.patch<OperationResult>(
+      `${this.#base}/horarios/asignaciones/${horarioAsignacionId}/culminar`,
+      {},
+    );
+  }
 }

@@ -176,10 +176,10 @@ interface MatrizSemana {
         <div class="card bg-base-100 border border-base-300">
           <div class="card-body">
             <h2 class="card-title">
-              Usuarios asignados ({{ h.usuarios.length }})
+              Usuarios asignados ({{ usuarios().length }})
             </h2>
 
-            @if (!h.usuarios.length) {
+            @if (!usuarios().length) {
               <p class="text-sm text-base-content/60 py-4">
                 No hay usuarios asignados a este horario.
               </p>
@@ -196,12 +196,19 @@ interface MatrizSemana {
                     </tr>
                   </thead>
                   <tbody>
-                    @for (u of h.usuarios; track u.horarioAsignacionId) {
+                    @for (u of usuarios(); track u.horarioAsignacionId) {
                       <tr>
                         <td>{{ u.usuario }}</td>
                         <td>{{ u.nombres }} {{ u.apellidos }}</td>
                         <td>{{ formatFecha(u.fechaInicio) }}</td>
-                        <td>{{ formatFecha(u.fechaFin) || 'Indefinida' }}</td>
+                        <td>
+                          {{ formatFecha(u.fechaFin) || 'Indefinida' }}
+                          @if (u.culminacion) {
+                            <span class="badge badge-success badge-sm ml-1">
+                              Culminado
+                            </span>
+                          }
+                        </td>
                         <td class="text-center">
                           <div class="tooltip" data-tip="Quitar horario">
                             <button
@@ -244,6 +251,7 @@ export default class HorarioDetallePage {
 
   public loading = signal(true);
   public detalle = signal<HorarioDetalle | null>(null);
+  public usuarios = signal<UsuarioHorario[]>([]);
   public desasignando = signal<number | null>(null);
 
   public matricesSemana = computed<MatrizSemana[]>(() => {
@@ -341,9 +349,30 @@ export default class HorarioDetallePage {
         }),
       )
       .subscribe({
-        next: (h) => this.detalle.set(h),
+        next: (h) => {
+          this.detalle.set(h);
+          this.cargarUsuarios();
+        },
         error: () => this.loading.set(false),
         complete: () => this.loading.set(false),
+      });
+  }
+
+  private cargarUsuarios(): void {
+    if (!this.horarioId) {
+      return;
+    }
+    this.#horariosService
+      .listarUsuarios(this.horarioId)
+      .pipe(
+        takeUntilDestroyed(this.#destroyRef),
+        catchError(() => {
+          this.usuarios.set([]);
+          return EMPTY;
+        }),
+      )
+      .subscribe({
+        next: (usuarios) => this.usuarios.set(usuarios),
       });
   }
 

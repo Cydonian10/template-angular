@@ -53,6 +53,21 @@ export interface UsuarioHorario {
   apellidos: string;
   fechaInicio: string | null;
   fechaFin: string | null;
+  culminacion: boolean;
+}
+
+export type EstadoAsignacionHorario = 'activo' | 'vencido' | 'culminado';
+
+export interface UsuarioHorarioAsignacion {
+  horarioAsignacionId: number;
+  horarioId: number;
+  horarioNombre: string;
+  areaId: number;
+  areaNombre: string | null;
+  fechaInicio: string | null;
+  fechaFin: string | null;
+  culminacion: boolean;
+  estado: EstadoAsignacionHorario;
 }
 
 export interface HorarioDetalle {

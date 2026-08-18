@@ -9,6 +9,7 @@ import {
   SyncUsuario,
   Usuario,
 } from '../core/interfaces/usuario.interface';
+import { UsuarioHorarioAsignacion } from '../core/interfaces/horario.interface';
 
 export interface UsuariosFiltro {
   activo?: boolean;
@@ -68,6 +69,12 @@ export class UsuariosService {
     return this.#http.post<OperationResult>(
       `${this.#base}/areas/${areaId}/usuarios-batch`,
       dto,
+    );
+  }
+
+  listarHorarios(usuarioId: number): Observable<UsuarioHorarioAsignacion[]> {
+    return this.#http.get<UsuarioHorarioAsignacion[]>(
+      `${this.#base}/usuarios/${usuarioId}/horarios`,
     );
   }
 }

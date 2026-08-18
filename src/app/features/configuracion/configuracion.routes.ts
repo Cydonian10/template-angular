@@ -31,6 +31,12 @@ const configuracionRoutes: Routes = [
       },
     ],
   },
+  {
+    path: 'asignacion-horario',
+    data: { breadcrumb: 'Asignación de horarios' },
+    loadComponent: () =>
+      import('./pages/asignacion-horario/asignacion-horario.page'),
+  },
 ];
 
 export default configuracionRoutes;

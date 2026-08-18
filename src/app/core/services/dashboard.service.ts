@@ -124,6 +124,17 @@ export class DashboardService {
           route: '',
         },
         {
+          moduloId: 2071,
+          menu: 'Asignación horario',
+          orden: 4,
+          icon: 'fas fa-user-clock',
+          url: '/configuracion/asignacion-horario',
+          externo: false,
+          permisos: [],
+          route: '',
+          menuId: 0,
+        },
+        {
           menuId: 2315,
           menu: 'Permiso',
           orden: 4,
