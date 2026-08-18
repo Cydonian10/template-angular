@@ -198,6 +198,7 @@ interface GrupoVigenciaEdicion {
                     class="input w-full"
                     min="1"
                     formControlName="horasLaborales"
+                    [disabled]="esEdicion() && estructuraBloqueada()"
                   />
                 </fieldset>
               </div>
@@ -209,28 +210,14 @@ interface GrupoVigenciaEdicion {
               <fa-icon [icon]="iconService.faWarning"></fa-icon>
               <div>
                 <div class="font-semibold">
-                  Este horario tiene turnos con movimientos
-                  (asistencias o turnos modificados).
+                  La estructura de este horario está bloqueada.
                 </div>
                 <div class="text-sm">
-                  No se puede modificar la estructura: no puedes cambiar las
-                  horas de los turnos, agregar o quitar días, agregar o quitar
-                  grupos ni cambiar el tipo de horario. Solo puedes editar los
-                  datos generales (nombre, horas laborales y área).
-                </div>
-              </div>
-            </div>
-          } @else if (esEdicion() && movimientosUsuarios()) {
-            <div role="alert" class="alert alert-info">
-              <fa-icon [icon]="iconService.faInfo"></fa-icon>
-              <div>
-                <div class="font-semibold">
-                  Este horario tiene licencias, permisos, vacaciones o
-                  justificaciones registradas de usuarios asignados.
-                </div>
-                <div class="text-sm">
-                  Son solo informativas: no bloquean la edición mientras no
-                  existan turnos con asistencias o turnos modificados.
+                  Tiene turnos con movimientos registrados (asistencias,
+                  permisos o justificaciones). Solo puedes editar el nombre del
+                  horario: no se pueden cambiar las horas de los turnos,
+                  agregar o quitar turnos o días, agregar o quitar grupos,
+                  cambiar el tipo de horario ni las horas laborales.
                 </div>
               </div>
             </div>
@@ -297,6 +284,7 @@ interface GrupoVigenciaEdicion {
                           type="time"
                           class="input input-xs w-24"
                           [value]="g.turnoGrupal.horaInicio"
+                          [disabled]="estructuraBloqueada()"
                           (change)="grupoTurnoGrupal(gi, 'horaInicio', $event)"
                         />
                         <span class="text-xs">a</span>
@@ -304,6 +292,7 @@ interface GrupoVigenciaEdicion {
                           type="time"
                           class="input input-xs w-24"
                           [value]="g.turnoGrupal.horaFin"
+                          [disabled]="estructuraBloqueada()"
                           (change)="grupoTurnoGrupal(gi, 'horaFin', $event)"
                         />
                         @if (extendidoTipo() || rotativo()) {
@@ -312,6 +301,7 @@ interface GrupoVigenciaEdicion {
                               type="checkbox"
                               class="checkbox checkbox-xs"
                               [checked]="g.turnoGrupal.extendido"
+                              [disabled]="estructuraBloqueada()"
                               (change)="
                                 grupoTurnoGrupal(gi, 'extendido', $event)
                               "
@@ -323,6 +313,7 @@ interface GrupoVigenciaEdicion {
                             <select
                               class="select select-xs w-28"
                               [value]="g.turnoGrupal.diaSalidaId ?? ''"
+                              [disabled]="estructuraBloqueada()"
                               (change)="grupoTurnoGrupalSalidaDia(gi, $event)"
                             >
                               <option [value]="''" disabled>Selecciona</option>
@@ -513,6 +504,7 @@ interface GrupoVigenciaEdicion {
                               <button
                                 type="button"
                                 class="btn btn-xs btn-outline mt-1 w-full"
+                                [disabled]="estructuraBloqueada()"
                                 (click)="agregarTurnoGrupo(gi, d.diaId)"
                               >
                                 <fa-icon [icon]="iconService.faPlus"></fa-icon>
@@ -556,6 +548,7 @@ interface GrupoVigenciaEdicion {
                       type="time"
                       class="input input-sm w-28"
                       [value]="turnoGrupal().horaInicio"
+                      [disabled]="estructuraBloqueada()"
                       (change)="turnoGrupalCampo('horaInicio', $event)"
                     />
                     <label class="label">Hora fin</label>
@@ -563,6 +556,7 @@ interface GrupoVigenciaEdicion {
                       type="time"
                       class="input input-sm w-28"
                       [value]="turnoGrupal().horaFin"
+                      [disabled]="estructuraBloqueada()"
                       (change)="turnoGrupalCampo('horaFin', $event)"
                     />
                     @if (extendidoTipo() || rotativo()) {
@@ -571,6 +565,7 @@ interface GrupoVigenciaEdicion {
                           type="checkbox"
                           class="checkbox checkbox-sm"
                           [checked]="turnoGrupal().extendido"
+                          [disabled]="estructuraBloqueada()"
                           (change)="turnoGrupalCampo('extendido', $event)"
                         />
                         Extendido
@@ -580,6 +575,7 @@ interface GrupoVigenciaEdicion {
                         <select
                           class="select select-sm w-32"
                           [value]="turnoGrupal().diaSalidaId ?? ''"
+                          [disabled]="estructuraBloqueada()"
                           (change)="turnoGrupalSalidaDia($event)"
                         >
                           <option [value]="''" disabled>Selecciona</option>
@@ -607,6 +603,7 @@ interface GrupoVigenciaEdicion {
                           type="checkbox"
                           class="checkbox checkbox-xs"
                           [checked]="turnoGrupalDias().has(d.diaId)"
+                          [disabled]="estructuraBloqueada()"
                           (change)="toggleDiaGrupal(d.diaId)"
                         />
                         {{ d.nombre }}
@@ -615,6 +612,7 @@ interface GrupoVigenciaEdicion {
                     <button
                       type="button"
                       class="btn btn-xs btn-ghost"
+                      [disabled]="estructuraBloqueada()"
                       (click)="seleccionarTodosDiasGrupales()"
                     >
                       Todos
@@ -622,6 +620,7 @@ interface GrupoVigenciaEdicion {
                     <button
                       type="button"
                       class="btn btn-xs btn-ghost"
+                      [disabled]="estructuraBloqueada()"
                       (click)="limpiarDiasGrupales()"
                     >
                       Ninguno
@@ -777,6 +776,7 @@ interface GrupoVigenciaEdicion {
                           <button
                             type="button"
                             class="btn btn-xs btn-outline mt-1 w-full"
+                            [disabled]="estructuraBloqueada()"
                             (click)="agregarTurno(d.diaId)"
                           >
                             <fa-icon [icon]="iconService.faPlus"></fa-icon>
@@ -927,16 +927,9 @@ export default class HorarioFormPage {
   public grupos = signal<GrupoVigenciaEdicion[]>([]);
 
   public movimientos = signal<HorarioMovimientos | null>(null);
-  public turnosBloqueados = computed<Set<number>>(
-    () => new Set(this.movimientos()?.turnosBloqueados ?? []),
-  );
   public estructuraBloqueada = computed(
-    () => this.turnosBloqueados().size > 0,
+    () => this.movimientos()?.estructuraBloqueada ?? false,
   );
-  public movimientosUsuarios = computed(() => {
-    const m = this.movimientos();
-    return !!m && (m.tieneLicencias || m.tienePermisos || m.tieneVacaciones || m.tieneJustificaciones);
-  });
 
   public turnoGrupalValido = computed(
     () =>
@@ -1348,10 +1341,6 @@ export default class HorarioFormPage {
     return this.estructuraBloqueada();
   }
 
-  diaBloqueado(_dia: DiaEdicion): boolean {
-    return this.estructuraBloqueada();
-  }
-
   puedeAlternarDia(_dia: DiaEdicion): boolean {
     return !this.estructuraBloqueada();
   }
@@ -1546,6 +1535,9 @@ export default class HorarioFormPage {
   }
 
   agregarTurnoGrupo(grupoIndex: number, diaId: number): void {
+    if (this.estructuraBloqueada()) {
+      return;
+    }
     this.grupos.update((lista) =>
       lista.map((g, gi) =>
         gi === grupoIndex
@@ -1632,6 +1624,9 @@ export default class HorarioFormPage {
   }
 
   agregarTurno(diaId: number): void {
+    if (this.estructuraBloqueada()) {
+      return;
+    }
     this.dias.update((lista) =>
       lista.map((d) =>
         d.diaId === diaId

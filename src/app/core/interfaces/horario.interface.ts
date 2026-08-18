@@ -130,9 +130,7 @@ export interface HorarioMovimientos {
   estructuraBloqueada: boolean;
   tieneAsistencias: boolean;
   tieneTurnosModificados: boolean;
-  tieneLicencias: boolean;
   tienePermisos: boolean;
-  tieneVacaciones: boolean;
   tieneJustificaciones: boolean;
 }
 
