@@ -71,6 +71,7 @@ export interface HorarioDetalle {
 }
 
 export interface TurnoInput {
+  turnoId?: number;
   horaInicio: string;
   horaFin: string;
   extendido?: boolean;
@@ -86,12 +87,14 @@ export interface TurnoDiaConectado {
 }
 
 export interface DiaInput {
+  horarioDiaId?: number;
   diaId: number;
   orden?: number;
   turnos: TurnoInput[];
 }
 
 export interface GrupoVigenciaInput {
+  vigenciaGrupoId?: number;
   fechaInicio: string;
   fechaFin?: string | null;
   dias: DiaInput[];
@@ -118,6 +121,19 @@ export interface ActualizarHorarioDto {
   rotativo?: boolean;
   regular?: boolean;
   horasLaborales?: number;
+  dias?: DiaInput[];
+  grupos?: GrupoVigenciaInput[];
+}
+
+export interface HorarioMovimientos {
+  turnosBloqueados: number[];
+  estructuraBloqueada: boolean;
+  tieneAsistencias: boolean;
+  tieneTurnosModificados: boolean;
+  tieneLicencias: boolean;
+  tienePermisos: boolean;
+  tieneVacaciones: boolean;
+  tieneJustificaciones: boolean;
 }
 
 export interface AsignarUsuariosDto {

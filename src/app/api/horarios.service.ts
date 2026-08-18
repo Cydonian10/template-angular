@@ -9,6 +9,7 @@ import {
   Dia,
   Horario,
   HorarioDetalle,
+  HorarioMovimientos,
   OperationResult,
   OperationResultCreate,
   TurnoDiaConectado,
@@ -31,6 +32,12 @@ export class HorariosService {
 
   obtenerPorId(id: number): Observable<HorarioDetalle> {
     return this.#http.get<HorarioDetalle>(`${this.#base}/horarios/${id}`);
+  }
+
+  obtenerMovimientos(id: number): Observable<HorarioMovimientos> {
+    return this.#http.get<HorarioMovimientos>(
+      `${this.#base}/horarios/${id}/movimientos`,
+    );
   }
 
   crear(dto: CrearHorarioDto): Observable<OperationResultCreate> {

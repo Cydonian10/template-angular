@@ -16,9 +16,11 @@ import { FontIconService } from '../../../../core/services/icon.service';
 import { Unidad } from '../../../../core/interfaces/unidad.interface';
 import { Area } from '../../../../core/interfaces/area.interface';
 import {
+  ActualizarHorarioDto,
   Dia,
   DiaInput,
   GrupoVigenciaInput,
+  HorarioMovimientos,
   OperationResult,
   OperationResultCreate,
   TurnoInput,
@@ -35,6 +37,7 @@ interface DiaEdicion {
   diaId: number;
   nombre: string;
   incluido: boolean;
+  horarioDiaId?: number;
   turnos: TurnoInput[];
 }
 
@@ -46,6 +49,7 @@ interface TurnoGrupal {
 }
 
 interface GrupoVigenciaEdicion {
+  vigenciaGrupoId?: number;
   fechaInicio: string;
   fechaFin?: string;
   turnoGrupal: TurnoGrupal;
@@ -157,6 +161,7 @@ interface GrupoVigenciaEdicion {
                         name="tipoHorario"
                         class="radio radio-sm"
                         [checked]="!extendidoTipo() && !rotativo()"
+                        [disabled]="esEdicion() && estructuraBloqueada()"
                         (change)="setTipo('regular')"
                       />
                       <span class="label-text">Regular</span>
@@ -167,6 +172,7 @@ interface GrupoVigenciaEdicion {
                         name="tipoHorario"
                         class="radio radio-sm"
                         [checked]="extendidoTipo()"
+                        [disabled]="esEdicion() && estructuraBloqueada()"
                         (change)="setTipo('extendido')"
                       />
                       <span class="label-text">Extendido</span>
@@ -177,6 +183,7 @@ interface GrupoVigenciaEdicion {
                         name="tipoHorario"
                         class="radio radio-sm"
                         [checked]="rotativo()"
+                        [disabled]="esEdicion() && estructuraBloqueada()"
                         (change)="setTipo('rotativo')"
                       />
                       <span class="label-text">Rotativo</span>
@@ -197,8 +204,25 @@ interface GrupoVigenciaEdicion {
             </div>
           </div>
 
-          @if (!esEdicion()) {
-            @if (rotativo()) {
+          @if (esEdicion() && estructuraBloqueada()) {
+            <div role="alert" class="alert alert-warning">
+              <fa-icon [icon]="iconService.faWarning"></fa-icon>
+              <div>
+                <div class="font-semibold">
+                  Este horario tiene movimientos registrados
+                  (asistencias, licencias, permisos, vacaciones,
+                  justificaciones o turnos modificados).
+                </div>
+                <div class="text-sm">
+                  No puedes agregar más días ni cambiar el tipo de horario. Los
+                  turnos con candado tienen movimientos y no pueden modificar
+                  sus horas ni eliminarse; los demás turnos sí se pueden editar.
+                </div>
+              </div>
+            </div>
+          }
+
+          @if (rotativo()) {
               <!-- ========== GRUPOS DE VIGENCIA (ROTATIVO) ========== -->
               <div class="card bg-base-100 border border-base-300">
                 <div class="card-body gap-4">
@@ -209,6 +233,7 @@ interface GrupoVigenciaEdicion {
                     <button
                       type="button"
                       class="btn btn-sm btn-outline"
+                      [disabled]="estructuraBloqueada()"
                       (click)="agregarGrupo()"
                     >
                       <fa-icon [icon]="iconService.faPlus"></fa-icon>
@@ -244,6 +269,7 @@ interface GrupoVigenciaEdicion {
                         <button
                           type="button"
                           class="btn btn-xs btn-ghost btn-error"
+                          [disabled]="grupoBloqueado(g)"
                           (click)="quitarGrupo(gi)"
                         >
                           <fa-icon [icon]="iconService.faTrash"></fa-icon>
@@ -297,7 +323,10 @@ interface GrupoVigenciaEdicion {
                         <button
                           type="button"
                           class="btn btn-xs btn-outline"
-                          [disabled]="!grupoTurnoGrupalValido(gi)"
+                          [disabled]="
+                            !grupoTurnoGrupalValido(gi) ||
+                            estructuraBloqueada()
+                          "
                           (click)="aplicarTurnoGrupalGrupo(gi)"
                         >
                           <fa-icon [icon]="iconService.faCheck"></fa-icon>
@@ -331,6 +360,7 @@ interface GrupoVigenciaEdicion {
                                 type="checkbox"
                                 class="checkbox checkbox-xs"
                                 [checked]="d.incluido"
+                                [disabled]="!puedeAlternarDia(d)"
                                 (change)="toggleDiaGrupo(gi, d.diaId)"
                               />
                             </label>
@@ -348,6 +378,12 @@ interface GrupoVigenciaEdicion {
                                     type="time"
                                     class="input input-xs w-full"
                                     [value]="t.horaInicio"
+                                    [disabled]="turnoBloqueado(t.turnoId)"
+                                    [title]="
+                                      turnoBloqueado(t.turnoId)
+                                        ? 'Turno con movimientos: no editable'
+                                        : ''
+                                    "
                                     (change)="
                                       turnoGrupoCampo(
                                         gi,
@@ -362,6 +398,12 @@ interface GrupoVigenciaEdicion {
                                     type="time"
                                     class="input input-xs w-full"
                                     [value]="t.horaFin"
+                                    [disabled]="turnoBloqueado(t.turnoId)"
+                                    [title]="
+                                      turnoBloqueado(t.turnoId)
+                                        ? 'Turno con movimientos: no editable'
+                                        : ''
+                                    "
                                     (change)="
                                       turnoGrupoCampo(
                                         gi,
@@ -375,6 +417,18 @@ interface GrupoVigenciaEdicion {
                                   <div
                                     class="flex items-center justify-between"
                                   >
+                                    @if (turnoBloqueado(t.turnoId)) {
+                                      <span
+                                        class="tooltip tooltip-bottom text-[10px] text-warning"
+                                        data-tip="Turno con movimientos: no editable"
+                                      >
+                                        <fa-icon
+                                          [icon]="iconService.faLock"
+                                        ></fa-icon>
+                                      </span>
+                                    } @else {
+                                      <span></span>
+                                    }
                                     @if (extendidoTipo() || rotativo()) {
                                       <label
                                         class="flex items-center gap-1 text-[10px]"
@@ -383,6 +437,9 @@ interface GrupoVigenciaEdicion {
                                           type="checkbox"
                                           class="checkbox checkbox-xs"
                                           [checked]="t.extendido"
+                                          [disabled]="
+                                            turnoBloqueado(t.turnoId)
+                                          "
                                           (change)="
                                             turnoGrupoCampo(
                                               gi,
@@ -399,6 +456,7 @@ interface GrupoVigenciaEdicion {
                                     <button
                                       type="button"
                                       class="btn btn-xs btn-ghost btn-error px-1"
+                                      [disabled]="turnoBloqueado(t.turnoId)"
                                       (click)="
                                         quitarTurnoGrupo(gi, d.diaId, ti)
                                       "
@@ -415,6 +473,7 @@ interface GrupoVigenciaEdicion {
                                     <select
                                       class="select select-xs w-full"
                                       [value]="t.diaSalidaId ?? ''"
+                                      [disabled]="turnoBloqueado(t.turnoId)"
                                       (change)="
                                         turnoGrupoSalidaDia(
                                           gi,
@@ -558,7 +617,7 @@ interface GrupoVigenciaEdicion {
                   <button
                     type="button"
                     class="btn btn-sm btn-primary w-fit"
-                    [disabled]="!turnoGrupalValido()"
+                    [disabled]="!turnoGrupalValido() || estructuraBloqueada()"
                     (click)="aplicarTurnoGrupal()"
                   >
                     <fa-icon [icon]="iconService.faCheck"></fa-icon>
@@ -589,6 +648,7 @@ interface GrupoVigenciaEdicion {
                             type="checkbox"
                             class="checkbox checkbox-xs"
                             [checked]="d.incluido"
+                            [disabled]="!puedeAlternarDia(d)"
                             (change)="toggleDia(d.diaId)"
                           />
                         </label>
@@ -602,6 +662,12 @@ interface GrupoVigenciaEdicion {
                                 type="time"
                                 class="input input-xs w-full"
                                 [value]="t.horaInicio"
+                                [disabled]="turnoBloqueado(t.turnoId)"
+                                [title]="
+                                  turnoBloqueado(t.turnoId)
+                                    ? 'Turno con movimientos: no editable'
+                                    : ''
+                                "
                                 (change)="
                                   turnoCampo(
                                     d.diaId,
@@ -615,11 +681,29 @@ interface GrupoVigenciaEdicion {
                                 type="time"
                                 class="input input-xs w-full"
                                 [value]="t.horaFin"
+                                [disabled]="turnoBloqueado(t.turnoId)"
+                                [title]="
+                                  turnoBloqueado(t.turnoId)
+                                    ? 'Turno con movimientos: no editable'
+                                    : ''
+                                "
                                 (change)="
                                   turnoCampo(d.diaId, $index, 'horaFin', $event)
                                 "
                               />
                               <div class="flex items-center justify-between">
+                                @if (turnoBloqueado(t.turnoId)) {
+                                  <span
+                                    class="tooltip tooltip-bottom text-[10px] text-warning"
+                                    data-tip="Turno con movimientos: no editable"
+                                  >
+                                    <fa-icon
+                                      [icon]="iconService.faLock"
+                                    ></fa-icon>
+                                  </span>
+                                } @else {
+                                  <span></span>
+                                }
                                 @if (extendidoTipo() || rotativo()) {
                                   <label
                                     class="flex items-center gap-1 text-[10px]"
@@ -628,6 +712,7 @@ interface GrupoVigenciaEdicion {
                                       type="checkbox"
                                       class="checkbox checkbox-xs"
                                       [checked]="t.extendido"
+                                      [disabled]="turnoBloqueado(t.turnoId)"
                                       (change)="
                                         turnoCampo(
                                           d.diaId,
@@ -643,6 +728,7 @@ interface GrupoVigenciaEdicion {
                                 <button
                                   type="button"
                                   class="btn btn-xs btn-ghost btn-error px-1"
+                                  [disabled]="turnoBloqueado(t.turnoId)"
                                   (click)="quitarTurno(d.diaId, $index)"
                                 >
                                   <fa-icon
@@ -656,6 +742,7 @@ interface GrupoVigenciaEdicion {
                                 <select
                                   class="select select-xs w-full"
                                   [value]="t.diaSalidaId ?? ''"
+                                  [disabled]="turnoBloqueado(t.turnoId)"
                                   (change)="
                                     turnoSalidaDia(d.diaId, $index, $event)
                                   "
@@ -707,60 +794,61 @@ interface GrupoVigenciaEdicion {
               </div>
             }
 
-            <!-- ========== ASIGNACIÓN DE USUARIOS ========== -->
-            <div class="card bg-base-100 border border-base-300">
-              <div class="card-body gap-3">
-                <h2 class="card-title">Asignar usuarios (opcional)</h2>
+            @if (!esEdicion()) {
+              <!-- ========== ASIGNACIÓN DE USUARIOS ========== -->
+              <div class="card bg-base-100 border border-base-300">
+                <div class="card-body gap-3">
+                  <h2 class="card-title">Asignar usuarios (opcional)</h2>
 
-                @if (areaId.value && !usuariosCargados()) {
-                  <button
-                    type="button"
-                    class="btn btn-sm btn-outline w-fit"
-                    (click)="cargarUsuarios()"
-                  >
-                    Cargar usuarios del área
-                  </button>
-                }
-
-                @if (usuarios().length) {
-                  <div class="flex flex-wrap gap-2">
-                    @for (u of usuarios(); track u.usuarioId) {
-                      <label
-                        class="flex items-center gap-2 rounded-lg border border-base-300 bg-base-100 px-3 py-1.5 text-sm"
-                      >
-                        <input
-                          type="checkbox"
-                          class="checkbox checkbox-sm"
-                          [checked]="seleccionados().has(u.usuarioId)"
-                          (change)="toggleUsuario(u.usuarioId)"
-                        />
-                        {{ u.nombres }} {{ u.apellidos }} ({{ u.usuario }})
-                      </label>
-                    }
-                  </div>
-
-                  @if (seleccionados().size) {
-                    <div class="grid grid-cols-1 gap-2 md:grid-cols-2">
-                      <label class="label">Fecha inicio *</label>
-                      <label class="label">Fecha fin (opcional)</label>
-                      <input
-                        type="date"
-                        class="input input-sm w-full"
-                        [value]="fechaInicio()"
-                        (change)="setFecha('inicio', $event)"
-                      />
-                      <input
-                        type="date"
-                        class="input input-sm w-full"
-                        [value]="fechaFin()"
-                        (change)="setFecha('fin', $event)"
-                      />
-                    </div>
+                  @if (areaId.value && !usuariosCargados()) {
+                    <button
+                      type="button"
+                      class="btn btn-sm btn-outline w-fit"
+                      (click)="cargarUsuarios()"
+                    >
+                      Cargar usuarios del área
+                    </button>
                   }
-                }
+
+                  @if (usuarios().length) {
+                    <div class="flex flex-wrap gap-2">
+                      @for (u of usuarios(); track u.usuarioId) {
+                        <label
+                          class="flex items-center gap-2 rounded-lg border border-base-300 bg-base-100 px-3 py-1.5 text-sm"
+                        >
+                          <input
+                            type="checkbox"
+                            class="checkbox checkbox-sm"
+                            [checked]="seleccionados().has(u.usuarioId)"
+                            (change)="toggleUsuario(u.usuarioId)"
+                          />
+                          {{ u.nombres }} {{ u.apellidos }} ({{ u.usuario }})
+                        </label>
+                      }
+                    </div>
+
+                    @if (seleccionados().size) {
+                      <div class="grid grid-cols-1 gap-2 md:grid-cols-2">
+                        <label class="label">Fecha inicio *</label>
+                        <label class="label">Fecha fin (opcional)</label>
+                        <input
+                          type="date"
+                          class="input input-sm w-full"
+                          [value]="fechaInicio()"
+                          (change)="setFecha('inicio', $event)"
+                        />
+                        <input
+                          type="date"
+                          class="input input-sm w-full"
+                          [value]="fechaFin()"
+                          (change)="setFecha('fin', $event)"
+                        />
+                      </div>
+                    }
+                  }
+                </div>
               </div>
-            </div>
-          }
+            }
 
           <div class="flex items-center justify-end gap-2">
             <button type="button" class="btn btn-ghost" (click)="volver()">
@@ -824,6 +912,14 @@ export default class HorarioFormPage {
   public turnoGrupalDias = signal<Set<number>>(new Set());
   public grupos = signal<GrupoVigenciaEdicion[]>([]);
 
+  public movimientos = signal<HorarioMovimientos | null>(null);
+  public turnosBloqueados = computed<Set<number>>(
+    () => new Set(this.movimientos()?.turnosBloqueados ?? []),
+  );
+  public estructuraBloqueada = computed(
+    () => !!this.movimientos()?.estructuraBloqueada,
+  );
+
   public turnoGrupalValido = computed(
     () =>
       !!this.turnoGrupal().horaInicio &&
@@ -832,9 +928,6 @@ export default class HorarioFormPage {
   );
 
   public gruposValidos = computed(() => {
-    if (this.esEdicion()) {
-      return true;
-    }
     if (!this.rotativo()) {
       return true;
     }
@@ -883,7 +976,7 @@ export default class HorarioFormPage {
   });
 
   public diasValidos = computed(() => {
-    if (this.esEdicion() || this.rotativo()) {
+    if (this.rotativo()) {
       return true;
     }
     const activos = this.dias().filter((d) => d.incluido);
@@ -917,9 +1010,6 @@ export default class HorarioFormPage {
       if (this.form.controls.horasLaborales.invalid) {
         return 'Las horas laborales deben ser mayor o igual a 1.';
       }
-    }
-    if (this.esEdicion()) {
-      return null;
     }
     if (this.extendidoTipo() && !this.#tieneTurnoExtendido()) {
       return 'Un horario extendido debe tener al menos un turno extendido con día de salida.';
@@ -1064,10 +1154,31 @@ export default class HorarioFormPage {
       ]);
       this.unidades.set(unidades);
 
-      const areas = await firstValueFrom(
-        this.#areasService.listar(detalle.unidadId),
-      );
+      const [areas, diasCatalogo, movimientos] = await Promise.all([
+        firstValueFrom(this.#areasService.listar(detalle.unidadId)),
+        firstValueFrom(this.#horariosService.listarDias()),
+        firstValueFrom(this.#horariosService.obtenerMovimientos(id)),
+      ]);
       this.areas.set(areas);
+      this.movimientos.set(movimientos);
+
+      const diasEdicion = this.#crearDiasEdicionDesdeDetalle(
+        diasCatalogo,
+        detalle.dias,
+      );
+      if (detalle.rotativo) {
+        this.grupos.set(
+          detalle.grupos.map((g) => ({
+            vigenciaGrupoId: g.vigenciaGrupoId,
+            fechaInicio: g.fechaInicio ?? '',
+            fechaFin: g.fechaFin ?? undefined,
+            turnoGrupal: { horaInicio: '', horaFin: '', extendido: false },
+            dias: this.#crearDiasEdicionDesdeDetalle(diasCatalogo, g.dias),
+          })),
+        );
+      } else {
+        this.dias.set(diasEdicion);
+      }
 
       this.form.patchValue({
         nombre: detalle.nombre,
@@ -1084,6 +1195,45 @@ export default class HorarioFormPage {
       return;
     }
     this.cargando.set(false);
+  }
+
+  #crearDiasEdicionDesdeDetalle(
+    diasCatalogo: { diaId: number; nombre: string }[],
+    diasDetalle: {
+      horarioDiaId: number;
+      diaId: number;
+      turnos: {
+        turnoId: number;
+        horaInicio: string;
+        horaFin: string;
+        extendido: boolean;
+        diaSalida: { diaId: number } | null;
+      }[];
+    }[],
+  ): DiaEdicion[] {
+    const porDia = new Map(diasDetalle.map((d) => [d.diaId, d]));
+    return diasCatalogo.map((d) => {
+      const det = porDia.get(d.diaId);
+      return {
+        diaId: d.diaId,
+        nombre: d.nombre,
+        incluido: !!det,
+        horarioDiaId: det?.horarioDiaId,
+        turnos:
+          det?.turnos.map((t) => ({
+            turnoId: t.turnoId,
+            horaInicio: this.#soloHora(t.horaInicio),
+            horaFin: this.#soloHora(t.horaFin),
+            extendido: t.extendido,
+            diaSalidaId: t.diaSalida?.diaId ?? null,
+          })) ?? [],
+      };
+    });
+  }
+
+  #soloHora(value: string): string {
+    const match = /^(\d{2}):(\d{2})/.exec(value);
+    return match ? `${match[1]}:${match[2]}` : value;
   }
 
   setTipo(tipo: 'regular' | 'extendido' | 'rotativo'): void {
@@ -1151,15 +1301,13 @@ export default class HorarioFormPage {
   }
 
   #normalizarTurnos(turnos: TurnoInput[]): TurnoInput[] {
-    return turnos.map((t) =>
-      t.extendido
-        ? t
-        : {
-            horaInicio: t.horaInicio,
-            horaFin: t.horaFin,
-            extendido: t.extendido,
-          },
-    );
+    return turnos.map((t) => {
+      if (t.extendido) {
+        return t;
+      }
+      const { diaSalidaId, ...rest } = t;
+      return rest;
+    });
   }
 
   #tieneTurnoExtendido(): boolean {
@@ -1176,6 +1324,25 @@ export default class HorarioFormPage {
 
   turnosDeDias(dias: DiaEdicion[]): TurnoInput[] {
     return dias.filter((d) => d.incluido).flatMap((d) => d.turnos);
+  }
+
+  turnoBloqueado(turnoId: number | undefined): boolean {
+    return turnoId !== undefined && this.turnosBloqueados().has(turnoId);
+  }
+
+  diaBloqueado(dia: DiaEdicion): boolean {
+    return dia.turnos.some((t) => this.turnoBloqueado(t.turnoId));
+  }
+
+  puedeAlternarDia(dia: DiaEdicion): boolean {
+    if (dia.incluido) {
+      return !this.diaBloqueado(dia);
+    }
+    return !this.estructuraBloqueada();
+  }
+
+  grupoBloqueado(grupo: GrupoVigenciaEdicion): boolean {
+    return grupo.dias.some((d) => this.diaBloqueado(d));
   }
 
   agregarGrupo(): void {
@@ -1618,7 +1785,34 @@ export default class HorarioFormPage {
 
     if (this.esEdicion()) {
       const id = Number(this.#route.snapshot.params['id']);
-      this.#guardarEdicion(id, flat);
+      const payload: ActualizarHorarioDto = { ...flat };
+      if (this.rotativo()) {
+        payload.grupos = this.grupos()
+          .filter((g) => g.fechaInicio)
+          .map((g) => ({
+            vigenciaGrupoId: g.vigenciaGrupoId,
+            fechaInicio: g.fechaInicio,
+            fechaFin: g.fechaFin || null,
+            dias: g.dias
+              .filter((d) => d.incluido)
+              .map((d, i) => ({
+                horarioDiaId: d.horarioDiaId,
+                diaId: d.diaId,
+                orden: i + 1,
+                turnos: this.#normalizarTurnos(d.turnos),
+              })),
+          }));
+      } else {
+        payload.dias = this.dias()
+          .filter((d) => d.incluido)
+          .map((d, i) => ({
+            horarioDiaId: d.horarioDiaId,
+            diaId: d.diaId,
+            orden: i + 1,
+            turnos: this.#normalizarTurnos(d.turnos),
+          }));
+      }
+      this.#guardarEdicion(id, payload);
       return;
     }
 
@@ -1703,17 +1897,7 @@ export default class HorarioFormPage {
       });
   }
 
-  #guardarEdicion(
-    id: number,
-    dto: {
-      nombre: string;
-      areaId: number;
-      extendido: boolean;
-      rotativo: boolean;
-      regular: boolean;
-      horasLaborales: number;
-    },
-  ): void {
+  #guardarEdicion(id: number, dto: ActualizarHorarioDto): void {
     this.guardando.set(true);
     this.#horariosService
       .actualizar(id, dto)
@@ -1725,8 +1909,9 @@ export default class HorarioFormPage {
             this.volver();
           }
         }),
-        catchError(() => {
-          this.#toastr.error('Error al actualizar el horario');
+        catchError((error) => {
+          const errorMessage = error.error?.error ?? error.error?.message;
+          this.#toastr.error(errorMessage ?? 'Error al actualizar el horario');
           return EMPTY;
         }),
       )

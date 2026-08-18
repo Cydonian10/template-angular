@@ -142,7 +142,7 @@ export default class HorariosPage {
   }
 
   abrirNuevo(): void {
-    this.#router.navigate(['/configuracion/horario-2/nuevo']);
+    this.#router.navigate(['/configuracion/horarios/nuevo']);
   }
 
   abrirEditar(horario: Horario): void {
