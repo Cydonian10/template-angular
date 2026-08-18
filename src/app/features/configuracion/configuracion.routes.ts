@@ -6,6 +6,11 @@ import { Routes } from '@angular/router';
 
 const configuracionRoutes: Routes = [
   {
+    path: 'biometricos',
+    data: { breadcrumb: 'Biométricos' },
+    loadComponent: () => import('./pages/biometricos/biometricos.page'),
+  },
+  {
     path: 'horarios',
     data: { breadcrumb: 'Horarios' },
     children: [
