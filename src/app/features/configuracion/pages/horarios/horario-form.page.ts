@@ -209,14 +209,28 @@ interface GrupoVigenciaEdicion {
               <fa-icon [icon]="iconService.faWarning"></fa-icon>
               <div>
                 <div class="font-semibold">
-                  Este horario tiene movimientos registrados
-                  (asistencias, licencias, permisos, vacaciones,
-                  justificaciones o turnos modificados).
+                  Este horario tiene turnos con movimientos
+                  (asistencias o turnos modificados).
                 </div>
                 <div class="text-sm">
-                  No puedes agregar más días ni cambiar el tipo de horario. Los
-                  turnos con candado tienen movimientos y no pueden modificar
-                  sus horas ni eliminarse; los demás turnos sí se pueden editar.
+                  No se puede modificar la estructura: no puedes cambiar las
+                  horas de los turnos, agregar o quitar días, agregar o quitar
+                  grupos ni cambiar el tipo de horario. Solo puedes editar los
+                  datos generales (nombre, horas laborales y área).
+                </div>
+              </div>
+            </div>
+          } @else if (esEdicion() && movimientosUsuarios()) {
+            <div role="alert" class="alert alert-info">
+              <fa-icon [icon]="iconService.faInfo"></fa-icon>
+              <div>
+                <div class="font-semibold">
+                  Este horario tiene licencias, permisos, vacaciones o
+                  justificaciones registradas de usuarios asignados.
+                </div>
+                <div class="text-sm">
+                  Son solo informativas: no bloquean la edición mientras no
+                  existan turnos con asistencias o turnos modificados.
                 </div>
               </div>
             </div>
@@ -917,8 +931,12 @@ export default class HorarioFormPage {
     () => new Set(this.movimientos()?.turnosBloqueados ?? []),
   );
   public estructuraBloqueada = computed(
-    () => !!this.movimientos()?.estructuraBloqueada,
+    () => this.turnosBloqueados().size > 0,
   );
+  public movimientosUsuarios = computed(() => {
+    const m = this.movimientos();
+    return !!m && (m.tieneLicencias || m.tienePermisos || m.tieneVacaciones || m.tieneJustificaciones);
+  });
 
   public turnoGrupalValido = computed(
     () =>
@@ -1326,23 +1344,20 @@ export default class HorarioFormPage {
     return dias.filter((d) => d.incluido).flatMap((d) => d.turnos);
   }
 
-  turnoBloqueado(turnoId: number | undefined): boolean {
-    return turnoId !== undefined && this.turnosBloqueados().has(turnoId);
+  turnoBloqueado(_turnoId: number | undefined): boolean {
+    return this.estructuraBloqueada();
   }
 
-  diaBloqueado(dia: DiaEdicion): boolean {
-    return dia.turnos.some((t) => this.turnoBloqueado(t.turnoId));
+  diaBloqueado(_dia: DiaEdicion): boolean {
+    return this.estructuraBloqueada();
   }
 
-  puedeAlternarDia(dia: DiaEdicion): boolean {
-    if (dia.incluido) {
-      return !this.diaBloqueado(dia);
-    }
+  puedeAlternarDia(_dia: DiaEdicion): boolean {
     return !this.estructuraBloqueada();
   }
 
-  grupoBloqueado(grupo: GrupoVigenciaEdicion): boolean {
-    return grupo.dias.some((d) => this.diaBloqueado(d));
+  grupoBloqueado(_grupo: GrupoVigenciaEdicion): boolean {
+    return this.estructuraBloqueada();
   }
 
   agregarGrupo(): void {
