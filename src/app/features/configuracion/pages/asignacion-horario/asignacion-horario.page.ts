@@ -1,7 +1,7 @@
 import { Component, DestroyRef, effect, inject, signal } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { BehaviorSubject, debounceTime, switchMap, tap } from 'rxjs';
-import { Dialog } from '@angular/cdk/dialog';
+import { Router } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { FontIconService } from '../../../../core/services/icon.service';
@@ -14,9 +14,6 @@ import PaginatorNg from '../../../../shared/paginator/paginator.ng';
 import { Unidad } from '../../../../core/interfaces/unidad.interface';
 import { Area } from '../../../../core/interfaces/area.interface';
 import { Usuario } from '../../../../core/interfaces/usuario.interface';
-import AsignarHorarioDialog, {
-  AsignarHorarioDialogResult,
-} from './components/asignar-horario.dialog.ng';
 
 interface FiltroAsignacion {
   busqueda?: string;
@@ -147,7 +144,7 @@ export default class AsignacionHorarioPage {
   #unidadesService = inject(UnidadesService);
   #areasService = inject(AreasService);
   #usuariosService = inject(UsuariosService);
-  #dialog = inject(Dialog);
+  #router = inject(Router);
   #toastr = inject(ToastrService);
   #destroyRef = inject(DestroyRef);
 
@@ -230,21 +227,10 @@ export default class AsignacionHorarioPage {
   }
 
   asignarHorario(usuario: Usuario): void {
-    const ref = this.#dialog.open<AsignarHorarioDialogResult>(
-      AsignarHorarioDialog,
-      {
-        data: { usuario },
-        disableClose: true,
-        width: '720px',
-      },
+    this.#router.navigate(
+      ['/configuracion/asignacion-horario', usuario.usuarioId],
+      { state: { usuario } },
     );
-    ref.closed
-      .pipe(takeUntilDestroyed(this.#destroyRef))
-      .subscribe((result) => {
-        if (result?.cambio) {
-          this.recargar();
-        }
-      });
   }
 
   #actualizarFiltro(patch: Partial<FiltroAsignacion>): void {
