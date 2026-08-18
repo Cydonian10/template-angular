@@ -55,34 +55,105 @@ export interface AsignarHorarioDialogResult {
             } @else {
               @for (a of asignaciones(); track a.horarioAsignacionId) {
                 <div
-                  class="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-base-300 bg-base-100 px-3 py-2"
+                  class="rounded-lg border border-base-300 bg-base-100 px-3 py-2"
                 >
-                  <div class="min-w-0">
-                    <p class="text-sm font-medium truncate">
-                      {{ a.horarioNombre }}
-                    </p>
-                    <p class="text-xs text-base-content/60">
-                      {{ a.fechaInicio ? ('Desde ' + a.fechaInicio) : 'Sin fecha inicio' }}
-                      @if (a.fechaFin) {
-                        · Hasta {{ a.fechaFin }}
+                  @if (editandoId() === a.horarioAsignacionId) {
+                    <div class="flex flex-wrap items-center gap-2">
+                      <div class="min-w-0">
+                        <p class="text-sm font-medium">
+                          {{ a.horarioNombre }}
+                        </p>
+                      </div>
+                      <label class="label px-0">
+                        <span class="label-text">Fecha fin:</span>
+                      </label>
+                      <input
+                        type="date"
+                        class="input input-sm input-bordered"
+                        [value]="nuevaFechaFin()"
+                        [min]="a.fechaInicio ?? ''"
+                        [disabled]="guardandoId() === a.horarioAsignacionId"
+                        (change)="setNuevaFechaFin($event)"
+                      />
+                      <button
+                        type="button"
+                        class="btn btn-xs btn-success"
+                        [disabled]="
+                          guardandoId() === a.horarioAsignacionId ||
+                          fechaFinInvalida(a)
+                        "
+                        (click)="guardarFecha(a)"
+                      >
+                        <fa-icon [icon]="iconService.faSave"></fa-icon>
+                        Guardar
+                      </button>
+                      <button
+                        type="button"
+                        class="btn btn-xs btn-ghost"
+                        [disabled]="guardandoId() === a.horarioAsignacionId"
+                        (click)="cancelarEdicion()"
+                      >
+                        Cancelar
+                      </button>
+                      @if (fechaFinInvalida(a)) {
+                        <span class="text-error text-xs">
+                          No puede ser anterior a la fecha inicio.
+                        </span>
                       }
-                    </p>
-                  </div>
-                  <div class="flex items-center gap-2">
-                    <span class="badge badge-sm" [class]="claseEstado(a.estado)">
-                      {{ etiquetaEstado(a.estado) }}
-                    </span>
-                    <button
-                      type="button"
-                      class="btn btn-xs btn-outline btn-success"
-                      [disabled]="culminandoId() === a.horarioAsignacionId || a.culminacion"
-                      (click)="culminar(a)"
-                      aria-label="Marcar como culminado"
+                    </div>
+                  } @else {
+                    <div
+                      class="flex flex-wrap items-center justify-between gap-2"
                     >
-                      <fa-icon [icon]="iconService.faCheck"></fa-icon>
-                      Culminar
-                    </button>
-                  </div>
+                      <div class="min-w-0">
+                        <p class="text-sm font-medium truncate">
+                          {{ a.horarioNombre }}
+                        </p>
+                        <p class="text-xs text-base-content/60">
+                          {{
+                            a.fechaInicio
+                              ? 'Desde ' + a.fechaInicio
+                              : 'Sin fecha inicio'
+                          }}
+                          @if (a.fechaFin) {
+                            · Hasta {{ a.fechaFin }}
+                          }
+                        </p>
+                      </div>
+                      <div class="flex items-center gap-2">
+                        <span
+                          class="badge badge-sm"
+                          [class]="claseEstado(a.estado)"
+                        >
+                          {{ etiquetaEstado(a.estado) }}
+                        </span>
+                        @if (!a.culminacion) {
+                          <button
+                            type="button"
+                            class="btn btn-xs btn-outline btn-info"
+                            (click)="editarFecha(a)"
+                            aria-label="Editar fecha fin"
+                          >
+                            <fa-icon [icon]="iconService.faPencil"></fa-icon>
+                            Editar fecha
+                          </button>
+                        }
+                        <button
+                          type="button"
+                          class="btn btn-xs btn-outline btn-success"
+                          [disabled]="
+                            culminandoId() === a.horarioAsignacionId ||
+                            a.culminacion
+                          "
+                          (click)="culminar(a)"
+                          aria-label="Marcar como culminado"
+                        >
+                          <fa-icon [icon]="iconService.faCheck"></fa-icon>
+                          Culminar
+                        </button>
+                      </div>
+                    </div>
+                  }
                 </div>
               }
             }
@@ -205,6 +276,9 @@ export default class AsignarHorarioDialog {
   public fechaFin = signal('');
   public culminandoId = signal<number | null>(null);
   public asignando = signal(false);
+  public editandoId = signal<number | null>(null);
+  public nuevaFechaFin = signal('');
+  public guardandoId = signal<number | null>(null);
 
   public puedeAsignar = computed(() =>
     this.asignaciones().every((a) => a.culminacion),
@@ -278,6 +352,55 @@ export default class AsignarHorarioDialog {
               this.#toastr.error('No se pudo culminar el horario');
             },
           });
+      });
+  }
+
+  editarFecha(asignacion: UsuarioHorarioAsignacion): void {
+    this.editandoId.set(asignacion.horarioAsignacionId);
+    this.nuevaFechaFin.set(asignacion.fechaFin ?? '');
+  }
+
+  cancelarEdicion(): void {
+    this.editandoId.set(null);
+    this.nuevaFechaFin.set('');
+  }
+
+  setNuevaFechaFin(event: Event): void {
+    this.nuevaFechaFin.set((event.target as HTMLInputElement).value);
+  }
+
+  fechaFinInvalida(asignacion: UsuarioHorarioAsignacion): boolean {
+    return (
+      !!this.nuevaFechaFin() &&
+      !!asignacion.fechaInicio &&
+      this.nuevaFechaFin() < asignacion.fechaInicio
+    );
+  }
+
+  guardarFecha(asignacion: UsuarioHorarioAsignacion): void {
+    const fechaFin = this.nuevaFechaFin();
+    if (this.fechaFinInvalida(asignacion)) {
+      return;
+    }
+    this.guardandoId.set(asignacion.horarioAsignacionId);
+    this.#horariosService
+      .actualizarAsignacion(asignacion.horarioAsignacionId, fechaFin || null)
+      .pipe(takeUntilDestroyed(this.#destroyRef))
+      .subscribe({
+        next: (res: OperationResult) => {
+          this.guardandoId.set(null);
+          if (res.State === 1) {
+            this.#toastr.success(res.Message);
+            this.cancelarEdicion();
+            this.#cargar();
+          } else {
+            this.#toastr.error(res.Message);
+          }
+        },
+        error: () => {
+          this.guardandoId.set(null);
+          this.#toastr.error('No se pudo actualizar la fecha fin del horario');
+        },
       });
   }
 

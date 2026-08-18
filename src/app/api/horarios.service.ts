@@ -120,4 +120,14 @@ export class HorariosService {
       {},
     );
   }
+
+  actualizarAsignacion(
+    horarioAsignacionId: number,
+    fechaFin: string | null,
+  ): Observable<OperationResult> {
+    return this.#http.patch<OperationResult>(
+      `${this.#base}/horarios/asignaciones/${horarioAsignacionId}`,
+      { fechaFin },
+    );
+  }
 }
