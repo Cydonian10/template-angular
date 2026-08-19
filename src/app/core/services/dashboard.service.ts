@@ -91,17 +91,6 @@ export class DashboardService {
       icon: 'fas fa-house',
       menus: [
         {
-          menuId: 2314,
-          menu: 'Rol por unidad',
-          orden: 2,
-          icon: 'fas fa-mug-saucer',
-          url: '/configuracion/rol-unidad',
-          moduloId: 2071,
-          externo: false,
-          permisos: [],
-          route: '',
-        },
-        {
           menuId: 2313,
           menu: 'Biometricos',
           orden: 2,

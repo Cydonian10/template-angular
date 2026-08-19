@@ -115,20 +115,20 @@ Convenciones:
 
 ## Acceptance criteria
 
-- [ ] El menú `Configuración > Biométricos` (ya existente en `dashboard.service.ts`) navega a `/configuracion/biometricos`.
-- [ ] La página lista los biométricos con nombre, marca, IP, serie, ubicación y modos (tarjeta/huella/rostro).
-- [ ] La paginación es en frontend con `PaginadorDataSource` y `ng-paginator`; no se modificó `api-scap`.
-- [ ] La búsqueda local filtra la lista por nombre, marca, IP, serie y ubicación.
-- [ ] El botón "Nuevo biométrico" abre un modal con marca, nombre, IP, serie, ubicación, tarjeta, huella y rostro.
-- [ ] Crear un biométrico llama `POST /biometrico` y la lista se actualiza.
-- [ ] Editar un biométrico precarga sus valores en el modal y llama `PUT /biometrico/:id`.
-- [ ] Eliminar un biométrico pide confirmación y llama `DELETE /biometrico/:id`.
-- [ ] El botón "Marcas" abre un modal con tabla de nombre, tipoDB y detalle.
-- [ ] El modal de marcas permite crear (`POST /marca-biometrico`), editar (`PUT /marca-biometrico/:id`) y eliminar (`DELETE /marca-biometrico/:id`) con confirmación.
-- [ ] Si una marca tiene biométricos asociados, la eliminación falla y se muestra el mensaje de error del backend.
-- [ ] Las marcas nuevas quedan disponibles en el selector del formulario de biométrico sin recargar la página.
-- [ ] Los mensajes de éxito/error se muestran con toastr según `OperationResult.State`.
-- [ ] `npm run build` finaliza sin errores.
+- [x] El menú `Configuración > Biométricos` (ya existente en `dashboard.service.ts`) navega a `/configuracion/biometricos`.
+- [x] La página lista los biométricos con nombre, marca, IP, serie, ubicación y modos (tarjeta/huella/rostro).
+- [x] La paginación es en frontend con `PaginadorDataSource` y `ng-paginator`; no se modificó `api-scap`.
+- [x] La búsqueda local filtra la lista por nombre, marca, IP, serie y ubicación.
+- [x] El botón "Nuevo biométrico" abre un modal con marca, nombre, IP, serie, ubicación, tarjeta, huella y rostro.
+- [x] Crear un biométrico llama `POST /biometrico` y la lista se actualiza.
+- [x] Editar un biométrico precarga sus valores en el modal y llama `PUT /biometrico/:id`.
+- [x] Eliminar un biométrico pide confirmación y llama `DELETE /biometrico/:id`.
+- [x] El botón "Marcas" abre un modal con tabla de nombre, tipoDB y detalle.
+- [x] El modal de marcas permite crear (`POST /marca-biometrico`), editar (`PUT /marca-biometrico/:id`) y eliminar (`DELETE /marca-biometrico/:id`) con confirmación.
+- [x] Si una marca tiene biométricos asociados, la eliminación falla y se muestra el mensaje de error del backend.
+- [x] Las marcas nuevas quedan disponibles en el selector del formulario de biométrico sin recargar la página.
+- [x] Los mensajes de éxito/error se muestran con toastr según `OperationResult.State`.
+- [x] `npm run build` finaliza sin errores.
 
 ---
 

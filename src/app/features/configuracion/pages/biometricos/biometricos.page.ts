@@ -13,6 +13,11 @@ import PaginatorNg from '../../../../shared/paginator/paginator.ng';
 import MarcasDialog, {
   MarcasDialogResult,
 } from './components/marcas.dialog.ng';
+import BiometricoFormDialog, {
+  BiometricoFormDialogResult,
+} from './components/biometrico-form.dialog.ng';
+import { abrirConfirmarDialog } from '../../../../shared/dialogs/confirmar.dialog.ng';
+import { OperationResult } from '../../../../core/interfaces/unidad.interface';
 import {
   Biometrico,
   MarcaBiometrico,
@@ -28,10 +33,16 @@ import {
       <div class="flex flex-wrap items-center justify-between gap-3">
         <h1 class="text-2xl font-bold">Biométricos</h1>
 
-        <button class="btn" (click)="abrirMarcas()">
-          <fa-icon [icon]="iconService.faTag"></fa-icon>
-          Marcas
-        </button>
+        <div class="flex flex-wrap gap-2">
+          <button class="btn" (click)="abrirMarcas()">
+            <fa-icon [icon]="iconService.faTag"></fa-icon>
+            Marcas
+          </button>
+          <button class="btn btn-primary" (click)="abrirNuevo()">
+            <fa-icon [icon]="iconService.faCirclePlus"></fa-icon>
+            Nuevo biométrico
+          </button>
+        </div>
       </div>
 
       <!-- ========== BÚSQUEDA LOCAL ========== -->
@@ -65,9 +76,9 @@ import {
                 class="text-2xl text-primary"
               ></fa-icon>
             </div>
-          } @else if (!biometricos().length) {
+          } @else if (!biometricosFiltrados().length) {
             <p class="text-sm text-base-content/60 py-4">
-              No hay biométricos registrados.
+              {{ biometricos().length ? 'No hay resultados para la búsqueda.' : 'No hay biométricos registrados.' }}
             </p>
           } @else {
             <div class="overflow-x-auto">
@@ -80,6 +91,7 @@ import {
                     <th>Serie</th>
                     <th>Ubicación</th>
                     <th>Modos</th>
+                    <th></th>
                   </tr>
                 </thead>
                 <tbody>
@@ -101,6 +113,24 @@ import {
                           @if (b.rostro) {
                             <span class="badge badge-sm badge-info">Rostro</span>
                           }
+                        </div>
+                      </td>
+                      <td class="text-end">
+                        <div class="flex justify-end gap-1">
+                          <button
+                            class="btn btn-xs btn-outline"
+                            (click)="abrirEditar(b)"
+                            aria-label="Editar biométrico"
+                          >
+                            <fa-icon [icon]="iconService.faPencil"></fa-icon>
+                          </button>
+                          <button
+                            class="btn btn-xs btn-outline btn-error"
+                            (click)="pedirEliminar(b)"
+                            aria-label="Eliminar biométrico"
+                          >
+                            <fa-icon [icon]="iconService.faTrash"></fa-icon>
+                          </button>
                         </div>
                       </td>
                     </tr>
@@ -191,6 +221,83 @@ export default class BiometricosPage {
         if (result?.marcas) {
           this.marcas.set(result.marcas);
         }
+      });
+  }
+
+  abrirNuevo(): void {
+    this.abrirFormulario();
+  }
+
+  abrirEditar(biometrico: Biometrico): void {
+    this.abrirFormulario(biometrico);
+  }
+
+  private abrirFormulario(biometrico?: Biometrico): void {
+    const ref = this.#dialog.open<BiometricoFormDialogResult>(BiometricoFormDialog, {
+      data: { marcas: this.marcas(), biometrico },
+      disableClose: true,
+      width: '640px',
+    });
+    ref.closed
+      .pipe(takeUntilDestroyed(this.#destroyRef))
+      .subscribe((result) => {
+        if (!result?.formulario) return;
+        const request = biometrico
+          ? this.#biometricosService.actualizarBiometrico(
+              biometrico.biometricoId,
+              result.formulario,
+            )
+          : this.#biometricosService.crearBiometrico(result.formulario);
+        request
+          .pipe(takeUntilDestroyed(this.#destroyRef))
+          .subscribe({
+            next: (res: OperationResult) => {
+              if (res.State === 1) {
+                this.#toastr.success(res.Message);
+                this.cargarBiometricos();
+              } else {
+                this.#toastr.error(res.Message);
+              }
+            },
+            error: () => this.#toastr.error('No se pudo guardar el biométrico'),
+          });
+      });
+  }
+
+  pedirEliminar(biometrico: Biometrico): void {
+    const ref = abrirConfirmarDialog(this.#dialog, {
+      titulo: 'Eliminar biométrico',
+      mensaje: `¿Seguro que deseas eliminar el biométrico "${biometrico.nombre}"?`,
+      textoConfirmar: 'Eliminar',
+    });
+    ref.closed
+      .pipe(takeUntilDestroyed(this.#destroyRef))
+      .subscribe((result) => {
+        if (!result?.confirmado) return;
+        this.#biometricosService
+          .eliminarBiometrico(biometrico.biometricoId)
+          .pipe(takeUntilDestroyed(this.#destroyRef))
+          .subscribe({
+            next: (res: OperationResult) => {
+              if (res.State === 1) {
+                this.#toastr.success(res.Message);
+                this.cargarBiometricos();
+              } else {
+                this.#toastr.error(res.Message);
+              }
+            },
+            error: () => this.#toastr.error('No se pudo eliminar el biométrico'),
+          });
+      });
+  }
+
+  private cargarBiometricos(): void {
+    this.#biometricosService
+      .listarBiometricos()
+      .pipe(takeUntilDestroyed(this.#destroyRef))
+      .subscribe({
+        next: (biometricos) => this.biometricos.set(biometricos),
+        error: () => this.#toastr.error('No se pudieron cargar los biométricos'),
       });
   }
 }
