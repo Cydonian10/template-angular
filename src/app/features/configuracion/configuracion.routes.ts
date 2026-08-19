@@ -11,6 +11,11 @@ const configuracionRoutes: Routes = [
     loadComponent: () => import('./pages/biometricos/biometricos.page'),
   },
   {
+    path: 'controles',
+    data: { breadcrumb: 'Controles' },
+    loadComponent: () => import('./pages/controles/controles.page'),
+  },
+  {
     path: 'horarios',
     data: { breadcrumb: 'Horarios' },
     children: [
