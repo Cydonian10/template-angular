@@ -29,15 +29,26 @@ export interface ControlAsignacionesDialogResult {
       <div class="card-body max-h-[85vh] gap-5 overflow-y-auto">
         <div class="flex items-start justify-between gap-3">
           <div>
-            <h2 class="card-title">Asignaciones de Control #{{ data.control.controlId }}</h2>
-            <p class="text-sm text-base-content/60">Todas usan este control activo.</p>
+            <h2 class="card-title">
+              Asignaciones de Control #{{ data.control.controlId }}
+            </h2>
+            <p class="text-sm text-base-content/60">
+              Todas usan este control activo.
+            </p>
           </div>
-          <button class="btn btn-ghost btn-sm btn-circle" (click)="cerrar()" aria-label="Cerrar">
+          <button
+            class="btn btn-ghost btn-sm btn-circle"
+            (click)="cerrar()"
+            aria-label="Cerrar"
+          >
             <fa-icon [icon]="iconService.faX"></fa-icon>
           </button>
         </div>
 
-        <form [formGroup]="filtros" class="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <form
+          [formGroup]="filtros"
+          class="grid grid-cols-1 gap-3 sm:grid-cols-3"
+        >
           <fieldset class="fieldset sm:col-span-3">
             <legend class="fieldset-legend">Buscar asignación</legend>
             <label class="input w-full">
@@ -53,7 +64,11 @@ export interface ControlAsignacionesDialogResult {
 
           <fieldset class="fieldset">
             <legend class="fieldset-legend">Unidad</legend>
-            <select class="select w-full" formControlName="unidadId" (change)="cambiarUnidad()">
+            <select
+              class="select w-full"
+              formControlName="unidadId"
+              (change)="cambiarUnidad()"
+            >
               <option [ngValue]="0">Todas las unidades</option>
               @for (unidad of data.unidades; track unidad.unidadId) {
                 <option [ngValue]="unidad.unidadId">
@@ -75,43 +90,116 @@ export interface ControlAsignacionesDialogResult {
         </form>
 
         <section>
-          <h3 class="mb-2 flex items-center gap-2 font-semibold">Áreas <span class="badge badge-sm">{{ data.control.areas.length }}</span></h3>
+          <h3 class="mb-2 flex items-center gap-2 font-semibold">
+            Áreas
+            <span class="badge badge-sm">{{ data.control.areas.length }}</span>
+          </h3>
           <ul class="list rounded-box border border-base-300">
-            @for (asignacion of areasFiltradas(); track asignacion.controlAreaId) {
-              <li class="list-row flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <span class="min-w-0 break-words">{{ nombreArea(asignacion.areaId) }}</span>
-                <button class="btn btn-ghost btn-sm self-start sm:self-auto" (click)="pedirDesasignar('area', asignacion.areaId, nombreArea(asignacion.areaId))">Quitar</button>
+            @for (
+              asignacion of areasFiltradas();
+              track asignacion.controlAreaId
+            ) {
+              <li
+                class="list-row flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
+              >
+                <span class="min-w-0 wrap-break-word">{{
+                  nombreArea(asignacion.areaId)
+                }}</span>
+                <button
+                  class="btn btn-ghost btn-sm self-start sm:self-auto"
+                  (click)="
+                    pedirDesasignar(
+                      'area',
+                      asignacion.areaId,
+                      nombreArea(asignacion.areaId)
+                    )
+                  "
+                >
+                  Quitar
+                </button>
               </li>
             } @empty {
-              <li class="px-3 py-2 text-sm text-base-content/60">Sin áreas asignadas.</li>
+              <li class="px-3 py-2 text-sm text-base-content/60">
+                Sin áreas asignadas.
+              </li>
             }
           </ul>
         </section>
 
         <section>
-          <h3 class="mb-2 flex items-center gap-2 font-semibold">Unidades <span class="badge badge-sm">{{ data.control.unidades.length }}</span></h3>
+          <h3 class="mb-2 flex items-center gap-2 font-semibold">
+            Unidades
+            <span class="badge badge-sm">{{
+              data.control.unidades.length
+            }}</span>
+          </h3>
           <ul class="list rounded-box border border-base-300">
-            @for (asignacion of unidadesFiltradas(); track asignacion.controlUnidadId) {
-              <li class="list-row flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <span class="min-w-0 break-words">{{ nombreUnidad(asignacion.unidadId) }}</span>
-                <button class="btn btn-ghost btn-sm self-start sm:self-auto" (click)="pedirDesasignar('unidad', asignacion.unidadId, nombreUnidad(asignacion.unidadId))">Quitar</button>
+            @for (
+              asignacion of unidadesFiltradas();
+              track asignacion.controlUnidadId
+            ) {
+              <li
+                class="list-row flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
+              >
+                <span class="min-w-0 wrap-break-word">{{
+                  nombreUnidad(asignacion.unidadId)
+                }}</span>
+                <button
+                  class="btn btn-ghost btn-sm self-start sm:self-auto"
+                  (click)="
+                    pedirDesasignar(
+                      'unidad',
+                      asignacion.unidadId,
+                      nombreUnidad(asignacion.unidadId)
+                    )
+                  "
+                >
+                  Quitar
+                </button>
               </li>
             } @empty {
-              <li class="px-3 py-2 text-sm text-base-content/60">Sin unidades asignadas.</li>
+              <li class="px-3 py-2 text-sm text-base-content/60">
+                Sin unidades asignadas.
+              </li>
             }
           </ul>
         </section>
 
         <section>
-          <h3 class="mb-2 flex items-center gap-2 font-semibold">Usuarios <span class="badge badge-sm">{{ data.control.usuarios.length }}</span></h3>
+          <h3 class="mb-2 flex items-center gap-2 font-semibold">
+            Usuarios
+            <span class="badge badge-sm">{{
+              data.control.usuarios.length
+            }}</span>
+          </h3>
           <ul class="list rounded-box border border-base-300">
-            @for (asignacion of usuariosFiltrados(); track asignacion.controlUsuarioId) {
-              <li class="list-row flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <span class="min-w-0 break-words">{{ nombreUsuario(asignacion.usuarioId) }}</span>
-                <button class="btn btn-ghost btn-sm self-start sm:self-auto" (click)="pedirDesasignar('usuario', asignacion.usuarioId, nombreUsuario(asignacion.usuarioId))">Quitar</button>
+            @for (
+              asignacion of usuariosFiltrados();
+              track asignacion.controlUsuarioId
+            ) {
+              <li
+                class="list-row flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
+              >
+                <span class="min-w-0 wrap-break-word">{{
+                  nombreUsuario(asignacion.usuarioId)
+                }}</span>
+                <button
+                  class="btn btn-ghost btn-sm self-start sm:self-auto"
+                  (click)="
+                    pedirDesasignar(
+                      'usuario',
+                      asignacion.usuarioId,
+                      nombreUsuario(asignacion.usuarioId)
+                    )
+                  "
+                >
+                  Quitar
+                </button>
               </li>
             } @empty {
-              <li class="px-3 py-2 text-sm text-base-content/60">Sin usuarios asignados.</li>
+              <li class="px-3 py-2 text-sm text-base-content/60">
+                Sin usuarios asignados.
+              </li>
             }
           </ul>
         </section>
@@ -141,27 +229,36 @@ export default class ControlAsignacionesDialog {
 
   areasFiltradas() {
     return this.data.control.areas.filter((asignacion) => {
-      const area = this.data.areas.find((item) => item.areaId === asignacion.areaId);
+      const area = this.data.areas.find(
+        (item) => item.areaId === asignacion.areaId,
+      );
       return (
-        (!this.filtros.controls.unidadId.value || area?.unidadId === this.filtros.controls.unidadId.value) &&
+        (!this.filtros.controls.unidadId.value ||
+          area?.unidadId === this.filtros.controls.unidadId.value) &&
         this.coincide(this.nombreArea(asignacion.areaId))
       );
     });
   }
 
   unidadesFiltradas() {
-    return this.data.control.unidades.filter((asignacion) =>
-      (!this.filtros.controls.unidadId.value || asignacion.unidadId === this.filtros.controls.unidadId.value) &&
-      this.coincide(this.nombreUnidad(asignacion.unidadId)),
+    return this.data.control.unidades.filter(
+      (asignacion) =>
+        (!this.filtros.controls.unidadId.value ||
+          asignacion.unidadId === this.filtros.controls.unidadId.value) &&
+        this.coincide(this.nombreUnidad(asignacion.unidadId)),
     );
   }
 
   usuariosFiltrados() {
     return this.data.control.usuarios.filter((asignacion) => {
-      const usuario = this.data.usuarios.find((item) => item.usuarioId === asignacion.usuarioId);
+      const usuario = this.data.usuarios.find(
+        (item) => item.usuarioId === asignacion.usuarioId,
+      );
       return (
-        (!this.filtros.controls.unidadId.value || usuario?.unidadId === this.filtros.controls.unidadId.value) &&
-        (!this.filtros.controls.areaId.value || usuario?.areaId === this.filtros.controls.areaId.value) &&
+        (!this.filtros.controls.unidadId.value ||
+          usuario?.unidadId === this.filtros.controls.unidadId.value) &&
+        (!this.filtros.controls.areaId.value ||
+          usuario?.areaId === this.filtros.controls.areaId.value) &&
         this.coincide(this.nombreUsuario(asignacion.usuarioId))
       );
     });
@@ -172,22 +269,34 @@ export default class ControlAsignacionesDialog {
   }
 
   nombreArea(areaId: number): string {
-    return this.data.areas.find((area) => area.areaId === areaId)?.nombre ?? `#${areaId}`;
+    return (
+      this.data.areas.find((area) => area.areaId === areaId)?.nombre ??
+      `#${areaId}`
+    );
   }
 
   nombreUnidad(unidadId: number): string {
-    return this.data.unidades.find((unidad) => unidad.unidadId === unidadId)?.nombre ?? `#${unidadId}`;
+    return (
+      this.data.unidades.find((unidad) => unidad.unidadId === unidadId)
+        ?.nombre ?? `#${unidadId}`
+    );
   }
 
   nombreUsuario(usuarioId: number): string {
-    const usuario = this.data.usuarios.find((item) => item.usuarioId === usuarioId);
-    return usuario ? `${usuario.nombres} ${usuario.apellidos}`.trim() || usuario.usuario : `#${usuarioId}`;
+    const usuario = this.data.usuarios.find(
+      (item) => item.usuarioId === usuarioId,
+    );
+    return usuario
+      ? `${usuario.nombres} ${usuario.apellidos}`.trim() || usuario.usuario
+      : `#${usuarioId}`;
   }
 
   private coincide(valor: string): boolean {
-    return valor.toLocaleLowerCase().includes(
-      this.filtros.controls.busqueda.value.toLocaleLowerCase().trim(),
-    );
+    return valor
+      .toLocaleLowerCase()
+      .includes(
+        this.filtros.controls.busqueda.value.toLocaleLowerCase().trim(),
+      );
   }
 
   pedirDesasignar(
