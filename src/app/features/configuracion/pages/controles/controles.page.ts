@@ -18,6 +18,9 @@ import ControlFormDialog, {
 import { abrirConfirmarDialog } from '../../../../shared/dialogs/confirmar.dialog.ng';
 import { OperationResult } from '../../../../core/interfaces/unidad.interface';
 import { Control } from '../../../../core/interfaces/control.interface';
+import { Area } from '../../../../core/interfaces/area.interface';
+import { Unidad } from '../../../../core/interfaces/unidad.interface';
+import { Usuario } from '../../../../core/interfaces/usuario.interface';
 
 @Component({
   selector: 'controles-page',
@@ -154,6 +157,9 @@ export default class ControlesPage {
 
   public loading = signal(true);
   public controles = signal<Control[]>([]);
+  public areas = signal<Area[]>([]);
+  public unidades = signal<Unidad[]>([]);
+  public usuarios = signal<Usuario[]>([]);
   public busqueda = signal('');
   #busqueda$ = new BehaviorSubject<string>('');
 
@@ -190,7 +196,12 @@ export default class ControlesPage {
     })
       .pipe(takeUntilDestroyed(this.#destroyRef))
       .subscribe({
-        next: ({ controles }) => this.controles.set(controles),
+        next: ({ controles, areas, unidades, usuarios }) => {
+          this.controles.set(controles);
+          this.areas.set(areas);
+          this.unidades.set(unidades);
+          this.usuarios.set(usuarios);
+        },
         error: () => this.#toastr.error('No se pudieron cargar los controles'),
       })
       .add(() => this.loading.set(false));
