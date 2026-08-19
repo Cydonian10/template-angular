@@ -1,6 +1,6 @@
 # SPEC 01 — Pantalla Biométricos con gestión de marcas
 
-> **Status:** Aprobado
+> **Status:** Implementado
 > **Depends on:** Ninguno (el backend ya está implementado en `api-scap`, SPEC 01)
 > **Date:** 2026-08-18
 > **Objective:** Crear la pantalla `Configuración > Biométricos` que lista dispositivos biométricos con paginación y búsqueda local, permite crear y editar biométricos mediante modal, e incluye un modal para administrar marcas de biométricos (listar, crear, editar y eliminar).
