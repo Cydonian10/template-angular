@@ -1,6 +1,6 @@
 # SPEC 02 — Pantalla Controles con asignaciones a áreas, unidades y usuarios
 
-> **Status:** Approved
+> **Status:** Implemented
 > **Depends on:** `api-scap` SPEC 02 (estado Implementado)
 > **Date:** 2026-08-19
 > **Objective:** Crear la pantalla `Configuración > Controles` en `/configuracion/controles` que lista controles con paginación y búsqueda local, permite crear, editar y eliminar controles, y gestiona asignaciones de un control a áreas, unidades y usuarios mediante modal con selector de búsqueda.
@@ -134,25 +134,25 @@ Convenciones:
 
 ## Acceptance criteria
 
-- [ ] El menú existente `Configuración > Controles` (en `dashboard.service.ts`) navega a `/configuracion/controles` y no se modifica.
-- [ ] La página lista los controles con su etiqueta `Control #<controlId>`, `tolerancia`, `limiteTardanza`, `limiteFalta` y el resumen de asignaciones activas.
-- [ ] La paginación es en frontend con `PaginadorDataSource` y `ng-paginator`; no se modificó `api-scap`.
-- [ ] La búsqueda local filtra la lista por ID y por asignaciones.
-- [ ] El botón "Nuevo control" abre un modal con los tres campos numéricos.
-- [ ] Crear un control llama `POST /controles/` y la lista se actualiza sin recargar la página.
-- [ ] El formulario exige `tolerancia`, `limiteTardanza` y `limiteFalta` como enteros `>= 0` y muestra mensajes de error bajo cada campo inválido.
-- [ ] Editar un control precarga sus valores y llama `PUT /controles/:id` con solo los campos modificados.
-- [ ] Eliminar un control pide confirmación y llama `DELETE /controles/:id`.
-- [ ] Eliminar un control con asignaciones activas muestra el mensaje de error del backend y no lo quita de la lista.
-- [ ] El botón "Asignar" abre un modal que crea una asignación por vez (control + tipo + entidad).
-- [ ] El selector de entidades filtra localmente mientras se escribe usando `@angular/cdk/overlay`.
-- [ ] Las entidades con control activo aparecen bloqueadas en el selector y muestran su control actual.
-- [ ] Asignar llama a `POST /controles/:id/area`, `POST /controles/:id/unidad` o `POST /controles/:id/usuario` según el tipo.
-- [ ] El modal de detalle lista las asignaciones activas con nombres resueltos y fallback `#<id>`.
-- [ ] Desasignar pide confirmación y llama al `DELETE` correspondiente de la asignación.
-- [ ] Asignar una entidad que ya tiene control muestra el mensaje de error del backend si la condición de carrera lo permite.
-- [ ] Los mensajes de éxito/error se muestran con toastr según `OperationResult.State`.
-- [ ] `npm run build` finaliza sin errores.
+- [x] El menú existente `Configuración > Controles` (en `dashboard.service.ts`) navega a `/configuracion/controles` y no se modifica.
+- [x] La página lista los controles con su etiqueta `Control #<controlId>`, `tolerancia`, `limiteTardanza`, `limiteFalta` y el resumen de asignaciones activas.
+- [x] La paginación es en frontend con `PaginadorDataSource` y `ng-paginator`; no se modificó `api-scap`.
+- [x] La búsqueda local filtra la lista por ID y por asignaciones.
+- [x] El botón "Nuevo control" abre un modal con los tres campos numéricos.
+- [x] Crear un control llama `POST /controles/` y la lista se actualiza sin recargar la página.
+- [x] El formulario exige `tolerancia`, `limiteTardanza` y `limiteFalta` como enteros `>= 0` y muestra mensajes de error bajo cada campo inválido.
+- [x] Editar un control precarga sus valores y llama `PUT /controles/:id` con solo los campos modificados.
+- [x] Eliminar un control pide confirmación y llama `DELETE /controles/:id`.
+- [x] Eliminar un control con asignaciones activas muestra el mensaje de error del backend y no lo quita de la lista.
+- [x] El botón "Asignar" abre un modal que crea una asignación por vez (control + tipo + entidad).
+- [x] El selector de entidades filtra localmente mientras se escribe usando `@angular/cdk/overlay`.
+- [x] Las entidades con control activo aparecen bloqueadas en el selector y muestran su control actual.
+- [x] Asignar llama a `POST /controles/:id/area`, `POST /controles/:id/unidad` o `POST /controles/:id/usuario` según el tipo.
+- [x] El modal de detalle lista las asignaciones activas con nombres resueltos y fallback `#<id>`.
+- [x] Desasignar pide confirmación y llama al `DELETE` correspondiente de la asignación.
+- [x] Asignar una entidad que ya tiene control muestra el mensaje de error del backend si la condición de carrera lo permite.
+- [x] Los mensajes de éxito/error se muestran con toastr según `OperationResult.State`.
+- [x] `npm run build` finaliza sin errores.
 
 ---
 

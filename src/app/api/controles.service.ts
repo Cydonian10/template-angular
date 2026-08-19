@@ -13,7 +13,10 @@ import {
   DesasignarControlUnidadDto,
   DesasignarControlUsuarioDto,
 } from '../core/interfaces/control.interface';
-import { OperationResult } from '../core/interfaces/unidad.interface';
+import {
+  OperationResult,
+  OperationResultCreate,
+} from '../core/interfaces/unidad.interface';
 
 @Injectable({
   providedIn: 'root',
@@ -26,8 +29,8 @@ export class ControlesService {
     return this.#http.get<Control[]>(`${this.#base}/controles/`);
   }
 
-  crearControl(dto: CrearControlDto): Observable<OperationResult> {
-    return this.#http.post<OperationResult>(`${this.#base}/controles/`, dto);
+  crearControl(dto: CrearControlDto): Observable<OperationResultCreate> {
+    return this.#http.post<OperationResultCreate>(`${this.#base}/controles/`, dto);
   }
 
   actualizarControl(

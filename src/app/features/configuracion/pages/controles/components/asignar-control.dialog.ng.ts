@@ -23,6 +23,7 @@ export interface AsignarControlDialogData {
   areas: Area[];
   unidades: Unidad[];
   usuarios: Usuario[];
+  controlId?: number;
 }
 
 export interface AsignarControlDialogResult {
@@ -68,6 +69,40 @@ export interface AsignarControlDialogResult {
             </select>
           </fieldset>
 
+          @if (requiereUnidad()) {
+            <fieldset class="fieldset">
+              <legend class="fieldset-legend">Filtrar por unidad</legend>
+              <select
+                class="select w-full"
+                [value]="form.controls.unidadId.value"
+                (change)="cambiarUnidad($event)"
+              >
+                <option [value]="0">Todas las unidades</option>
+                @for (unidad of data.unidades; track unidad.unidadId) {
+                  <option [value]="unidad.unidadId">
+                    {{ unidad.nombre ?? 'Unidad #' + unidad.unidadId }}
+                  </option>
+                }
+              </select>
+            </fieldset>
+          }
+
+          @if (form.controls.tipo.value === 'usuario') {
+            <fieldset class="fieldset">
+              <legend class="fieldset-legend">Filtrar por área</legend>
+              <select
+                class="select w-full"
+                [value]="form.controls.areaId.value"
+                (change)="cambiarArea($event)"
+              >
+                <option [value]="0">Todas las áreas</option>
+                @for (area of areasFiltradas(); track area.areaId) {
+                  <option [value]="area.areaId">{{ area.nombre }}</option>
+                }
+              </select>
+            </fieldset>
+          }
+
           <fieldset class="fieldset">
             <legend class="fieldset-legend">{{ etiquetaEntidad() }} *</legend>
             <buscar-entidad-selector
@@ -102,15 +137,17 @@ export default class AsignarControlDialog {
   public iconService = inject(FontIconService);
 
   public form = this.#fb.nonNullable.group({
-    controlId: [0, [Validators.required, Validators.min(1)]],
+    controlId: [this.data.controlId ?? 0, [Validators.required, Validators.min(1)]],
     tipo: ['area' as TipoAsignacion],
+    unidadId: [0],
+    areaId: [0],
     entidadId: [0, [Validators.required, Validators.min(1)]],
   });
 
   opcionesEntidad(): BuscarEntidadOpcion[] {
     const tipo = this.form.controls.tipo.value;
     if (tipo === 'area') {
-      return this.data.areas.map((area) =>
+      return this.areasFiltradas().map((area) =>
         this.crearOpcion(area.areaId, area.nombre, this.buscarAsignacionArea(area.areaId)),
       );
     }
@@ -123,7 +160,7 @@ export default class AsignarControlDialog {
         ),
       );
     }
-    return this.data.usuarios.map((usuario) =>
+    return this.usuariosFiltrados().map((usuario) =>
       this.crearOpcion(
         usuario.usuarioId,
         `${usuario.nombres} ${usuario.apellidos}`.trim() || usuario.usuario,
@@ -141,6 +178,27 @@ export default class AsignarControlDialog {
     return etiquetas[this.form.controls.tipo.value];
   }
 
+  requiereUnidad(): boolean {
+    return this.form.controls.tipo.value !== 'unidad';
+  }
+
+  areasFiltradas(): Area[] {
+    const unidadId = this.form.controls.unidadId.value;
+    return unidadId
+      ? this.data.areas.filter((area) => area.unidadId === unidadId)
+      : this.data.areas;
+  }
+
+  usuariosFiltrados(): Usuario[] {
+    const unidadId = this.form.controls.unidadId.value;
+    const areaId = this.form.controls.areaId.value;
+    return this.data.usuarios.filter(
+      (usuario) =>
+        (!unidadId || usuario.unidadId === unidadId) &&
+        (!areaId || usuario.areaId === areaId),
+    );
+  }
+
   entidadSeleccionada(): string {
     const id = this.form.controls.entidadId.value;
     return this.opcionesEntidad().find((opcion) => opcion.id === id)?.nombre ?? '';
@@ -150,12 +208,30 @@ export default class AsignarControlDialog {
     this.form.controls.tipo.setValue(
       (event.target as HTMLSelectElement).value as TipoAsignacion,
     );
+    this.form.controls.unidadId.setValue(0);
+    this.form.controls.areaId.setValue(0);
     this.form.controls.entidadId.setValue(0);
     this.form.controls.entidadId.markAsUntouched();
   }
 
+  cambiarUnidad(event: Event): void {
+    this.form.controls.unidadId.setValue(Number((event.target as HTMLSelectElement).value));
+    this.form.controls.areaId.setValue(0);
+    this.limpiarEntidad();
+  }
+
+  cambiarArea(event: Event): void {
+    this.form.controls.areaId.setValue(Number((event.target as HTMLSelectElement).value));
+    this.limpiarEntidad();
+  }
+
   seleccionarEntidad(opcion: BuscarEntidadOpcion): void {
     this.form.controls.entidadId.setValue(opcion.id);
+  }
+
+  private limpiarEntidad(): void {
+    this.form.controls.entidadId.setValue(0);
+    this.form.controls.entidadId.markAsUntouched();
   }
 
   guardar(): void {

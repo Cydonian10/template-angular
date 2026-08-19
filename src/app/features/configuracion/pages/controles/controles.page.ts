@@ -1,6 +1,6 @@
 import { Component, DestroyRef, computed, effect, inject, signal } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
-import { BehaviorSubject, debounceTime, forkJoin } from 'rxjs';
+import { BehaviorSubject, debounceTime, forkJoin, Observable } from 'rxjs';
 import { Dialog } from '@angular/cdk/dialog';
 import { ToastrService } from 'ngx-toastr';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
@@ -15,9 +15,22 @@ import PaginatorNg from '../../../../shared/paginator/paginator.ng';
 import ControlFormDialog, {
   ControlFormDialogResult,
 } from './components/control-form.dialog.ng';
+import AsignarControlDialog, {
+  AsignarControlDialogResult,
+} from './components/asignar-control.dialog.ng';
+import ControlAsignacionesDialog, {
+  ControlAsignacionesDialogResult,
+} from './components/control-asignaciones.dialog.ng';
 import { abrirConfirmarDialog } from '../../../../shared/dialogs/confirmar.dialog.ng';
-import { OperationResult } from '../../../../core/interfaces/unidad.interface';
-import { Control } from '../../../../core/interfaces/control.interface';
+import {
+  OperationResult,
+  OperationResultCreate,
+} from '../../../../core/interfaces/unidad.interface';
+import {
+  ActualizarControlDto,
+  Control,
+  CrearControlDto,
+} from '../../../../core/interfaces/control.interface';
 import { Area } from '../../../../core/interfaces/area.interface';
 import { Unidad } from '../../../../core/interfaces/unidad.interface';
 import { Usuario } from '../../../../core/interfaces/usuario.interface';
@@ -39,10 +52,13 @@ import { Usuario } from '../../../../core/interfaces/usuario.interface';
             Configura tolerancia, tardanza y falta.
           </p>
         </div>
-        <button class="btn btn-primary" (click)="abrirNuevo()">
-          <fa-icon [icon]="iconService.faCirclePlus"></fa-icon>
-          Nuevo control
-        </button>
+        <div class="flex flex-wrap gap-2">
+          <button class="btn" (click)="abrirAsignar()">Asignar control</button>
+          <button class="btn btn-primary" (click)="abrirNuevo()">
+            <fa-icon [icon]="iconService.faCirclePlus"></fa-icon>
+            Nuevo control
+          </button>
+        </div>
       </div>
 
       <div class="flex flex-wrap items-end gap-3">
@@ -111,6 +127,18 @@ import { Usuario } from '../../../../core/interfaces/usuario.interface';
                       </td>
                       <td class="text-end">
                         <div class="flex justify-end gap-1">
+                          <button
+                            class="btn btn-xs btn-outline"
+                            (click)="abrirAsignaciones(control)"
+                          >
+                            Asignaciones
+                          </button>
+                          <button
+                            class="btn btn-xs btn-outline"
+                            (click)="abrirAsignar(control.controlId)"
+                          >
+                            Asignar
+                          </button>
                           <button
                             class="btn btn-xs btn-outline"
                             (click)="abrirEditar(control)"
@@ -230,18 +258,35 @@ export default class ControlesPage {
       .subscribe((result) => {
         if (!result?.formulario) return;
         const request = control
-          ? this.#controlesService.actualizarControl(
-              control.controlId,
-              result.formulario,
-            )
+          ? this.#controlesService.actualizarControl(control.controlId, this.cambios(control, result.formulario))
           : this.#controlesService.crearControl(result.formulario);
+        if (control && !Object.keys(this.cambios(control, result.formulario)).length) {
+          this.#toastr.info('No hay cambios para guardar.');
+          return;
+        }
         request
           .pipe(takeUntilDestroyed(this.#destroyRef))
           .subscribe({
-            next: (res: OperationResult) => {
+            next: (res: OperationResult | OperationResultCreate) => {
               if (res.State === 1) {
                 this.#toastr.success(res.Message);
-                this.cargarControles();
+                if (control) {
+                  this.reemplazarControl({ ...control, ...result.formulario });
+                } else if ('Id' in res) {
+                  const controlId = res.Id;
+                  if (controlId !== null) {
+                    this.controles.update((controles) => [
+                      ...controles,
+                      {
+                        controlId,
+                        ...result.formulario,
+                        areas: [],
+                        unidades: [],
+                        usuarios: [],
+                      },
+                    ]);
+                  }
+                }
               } else {
                 this.#toastr.error(res.Message);
               }
@@ -268,7 +313,9 @@ export default class ControlesPage {
             next: (res: OperationResult) => {
               if (res.State === 1) {
                 this.#toastr.success(res.Message);
-                this.cargarControles();
+                this.controles.update((controles) =>
+                  controles.filter((item) => item.controlId !== control.controlId),
+                );
               } else {
                 this.#toastr.error(res.Message);
               }
@@ -278,13 +325,108 @@ export default class ControlesPage {
       });
   }
 
-  private cargarControles(): void {
-    this.#controlesService
-      .listarControles()
+  abrirAsignar(controlId?: number): void {
+    const ref = this.#dialog.open<AsignarControlDialogResult>(AsignarControlDialog, {
+      data: {
+        controles: this.controles(),
+        areas: this.areas(),
+        unidades: this.unidades(),
+        usuarios: this.usuarios(),
+        controlId,
+      },
+      disableClose: true,
+      width: '560px',
+    });
+    ref.closed
       .pipe(takeUntilDestroyed(this.#destroyRef))
-      .subscribe({
-        next: (controles) => this.controles.set(controles),
-        error: () => this.#toastr.error('No se pudieron cargar los controles'),
+      .subscribe((result) => {
+        if (!result) return;
+        const solicitud =
+          result.tipo === 'area'
+            ? this.#controlesService.asignarArea(result.controlId, {
+                areaId: result.entidadId,
+              })
+            : result.tipo === 'unidad'
+              ? this.#controlesService.asignarUnidad(result.controlId, {
+                  unidadId: result.entidadId,
+                })
+              : this.#controlesService.asignarUsuario(result.controlId, {
+                  usuarioId: result.entidadId,
+                });
+        this.actualizarAsignacion(solicitud, 'Asignación creada correctamente.');
       });
+  }
+
+  abrirAsignaciones(control: Control): void {
+    const ref = this.#dialog.open<ControlAsignacionesDialogResult>(
+      ControlAsignacionesDialog,
+      {
+        data: {
+          control,
+          areas: this.areas(),
+          unidades: this.unidades(),
+          usuarios: this.usuarios(),
+        },
+        disableClose: true,
+        width: '640px',
+      },
+    );
+    ref.closed
+      .pipe(takeUntilDestroyed(this.#destroyRef))
+      .subscribe((result) => {
+        if (!result) return;
+        const solicitud =
+          result.tipo === 'area'
+            ? this.#controlesService.desasignarArea(control.controlId, {
+                areaId: result.entidadId,
+              })
+            : result.tipo === 'unidad'
+              ? this.#controlesService.desasignarUnidad(control.controlId, {
+                  unidadId: result.entidadId,
+                })
+              : this.#controlesService.desasignarUsuario(control.controlId, {
+                  usuarioId: result.entidadId,
+                });
+        this.actualizarAsignacion(solicitud, 'Asignación eliminada correctamente.');
+      });
+  }
+
+  private actualizarAsignacion(
+    solicitud: Observable<Control>,
+    mensajeExito: string,
+  ): void {
+    solicitud.pipe(takeUntilDestroyed(this.#destroyRef)).subscribe({
+      next: (control) => {
+        this.reemplazarControl(control);
+        this.#toastr.success(mensajeExito);
+      },
+      error: (error: { error?: { message?: string } }) =>
+        this.#toastr.error(error.error?.message ?? 'No se pudo actualizar la asignación'),
+    });
+  }
+
+  private reemplazarControl(control: Control): void {
+    this.controles.update((controles) =>
+      controles.map((item) =>
+        item.controlId === control.controlId ? control : item,
+      ),
+    );
+  }
+
+  private cambios(
+    control: Control,
+    formulario: CrearControlDto,
+  ): ActualizarControlDto {
+    return {
+      ...(control.tolerancia !== formulario.tolerancia
+        ? { tolerancia: formulario.tolerancia }
+        : {}),
+      ...(control.limiteTardanza !== formulario.limiteTardanza
+        ? { limiteTardanza: formulario.limiteTardanza }
+        : {}),
+      ...(control.limiteFalta !== formulario.limiteFalta
+        ? { limiteFalta: formulario.limiteFalta }
+        : {}),
+    };
   }
 }
