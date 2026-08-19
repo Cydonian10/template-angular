@@ -15,6 +15,7 @@
 - Tabla de biométricos con paginación en frontend (`PaginadorDataSource` + `ng-paginator`) y búsqueda local por nombre, marca, IP, serie y ubicación.
 - Modal de crear/editar biométrico con campos: marca, nombre, IP, serie, ubicación, tarjeta, huella y rostro.
 - Modal de marcas con tabla (nombre, tipoDB, detalle) y acciones crear, editar y eliminar.
+- Formularios reactivos (Reactive Forms) con validaciones `required` y `maxLength` (según los schemas Zod del backend) y mensajes de error mostrados bajo cada campo inválido.
 - Eliminación con diálogo de confirmación para biométricos y marcas.
 - Servicios HTTP nuevos: `biometricos.service.ts` (biométricos) y `marca-biometrico.service.ts` (marcas), con contratos en `core/interfaces/biometrico.interface.ts`.
 - Ruta `/configuracion/biometricos` en `configuracion.routes.ts`.
@@ -139,6 +140,7 @@ Convenciones:
 - **Yes:** Modal de marcas con CRUD completo dentro de la página. El backend ya expone las rutas y el usuario lo prefirió a un menú separado en Mantenimiento.
 - **Yes:** Dos servicios separados: `biometricos.service.ts` (biométricos) y `marca-biometrico.service.ts` (marcas). Cada entidad con su propio servicio, alineado con la separación de módulos del backend.
 - **Yes:** Contratos e interfaces nuevos en `core/interfaces/biometrico.interface.ts` siguiendo la convención del proyecto.
+- **Yes:** Formularios reactivos (Reactive Forms) con validaciones `required` y `maxLength` replicando los schemas Zod del backend, y mensajes de error bajo cada input inválido. Aplica al formulario de marcas y al de biométrico.
 - **No:** Menú separado `Mantenimiento > Marcas`. Se concentra todo en `Configuración > Biométricos`.
 - **No:** Cambios en `api-scap`. El CRUD ya está implementado (SPEC 01 del backend, estado Implementado).
 - **No:** Comunicación con dispositivos biométricos reales. Solo gestión administrativa de registros.

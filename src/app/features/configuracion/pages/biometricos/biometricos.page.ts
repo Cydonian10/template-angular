@@ -1,6 +1,7 @@
 import { Component, DestroyRef, computed, effect, inject, signal } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { BehaviorSubject, debounceTime, forkJoin } from 'rxjs';
+import { Dialog } from '@angular/cdk/dialog';
 import { ToastrService } from 'ngx-toastr';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { FontIconService } from '../../../../core/services/icon.service';
@@ -9,6 +10,9 @@ import { MarcaBiometricoService } from '../../../../api/marca-biometrico.service
 import { PaginadorDataSource } from '../../../../core/datasources/paginador-data-source';
 import BreadcrumbsNg from '../../../../layout/breadcrumbs/breadcrumbs.ng';
 import PaginatorNg from '../../../../shared/paginator/paginator.ng';
+import MarcasDialog, {
+  MarcasDialogResult,
+} from './components/marcas.dialog.ng';
 import {
   Biometrico,
   MarcaBiometrico,
@@ -23,6 +27,11 @@ import {
     <div class="mt-4 space-y-6">
       <div class="flex flex-wrap items-center justify-between gap-3">
         <h1 class="text-2xl font-bold">Biométricos</h1>
+
+        <button class="btn" (click)="abrirMarcas()">
+          <fa-icon [icon]="iconService.faTag"></fa-icon>
+          Marcas
+        </button>
       </div>
 
       <!-- ========== BÚSQUEDA LOCAL ========== -->
@@ -118,6 +127,7 @@ export default class BiometricosPage {
   #marcasService = inject(MarcaBiometricoService);
   #toastr = inject(ToastrService);
   #destroyRef = inject(DestroyRef);
+  #dialog = inject(Dialog);
 
   public loading = signal(true);
   public biometricos = signal<Biometrico[]>([]);
@@ -167,5 +177,20 @@ export default class BiometricosPage {
 
   buscar(event: Event): void {
     this.#busqueda$.next((event.target as HTMLInputElement).value);
+  }
+
+  abrirMarcas(): void {
+    const ref = this.#dialog.open<MarcasDialogResult>(MarcasDialog, {
+      data: { marcas: this.marcas() },
+      disableClose: true,
+      width: '640px',
+    });
+    ref.closed
+      .pipe(takeUntilDestroyed(this.#destroyRef))
+      .subscribe((result) => {
+        if (result?.marcas) {
+          this.marcas.set(result.marcas);
+        }
+      });
   }
 }
