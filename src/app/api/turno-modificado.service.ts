@@ -10,6 +10,7 @@ import {
   TurnoModificado,
   TurnoModificadoFiltro,
 } from '../core/interfaces/turno-modificado.interface';
+import { UsuarioTurnoModificado } from '../features/seguimiento/pages/turno-modificado/components/turno-modificado.types';
 
 @Injectable({ providedIn: 'root' })
 export class TurnoModificadoService {
@@ -22,6 +23,13 @@ export class TurnoModificadoService {
     if (filtro.fechaHasta) params = params.set('fechaHasta', filtro.fechaHasta);
     if (filtro.usuarioId !== undefined) params = params.set('usuarioId', filtro.usuarioId);
     return this.#http.get<TurnoModificado[]>(`${this.#base}/turno/${turnoId}/modificar`, { params });
+  }
+
+  listarPorUsuario(usuarioId: number, filtro: Pick<TurnoModificadoFiltro, 'fechaDesde' | 'fechaHasta'> = {}): Observable<UsuarioTurnoModificado[]> {
+    let params = new HttpParams();
+    if (filtro.fechaDesde) params = params.set('fechaDesde', filtro.fechaDesde);
+    if (filtro.fechaHasta) params = params.set('fechaHasta', filtro.fechaHasta);
+    return this.#http.get<UsuarioTurnoModificado[]>(`${this.#base}/usuarios/${usuarioId}/turnos-modificados`, { params });
   }
 
   obtener(turnoId: number, id: number): Observable<TurnoModificado> {
