@@ -27,9 +27,7 @@ La matriz semanal actual permite seleccionar un turno de un día y después intr
 - Mostrar un mensaje y deshabilitar el guardado cuando la fecha no tenga turnos disponibles.
 - Usar como fecha inicial el día actual si está dentro de la vigencia; de lo contrario, la fecha de inicio de la asignación.
 - Limpiar turno y horas seleccionados cuando cambie la fecha.
-- Aplicar el mismo flujo guiado al editar una modificación existente.
-- Bloquear la edición guiada de modificaciones cuya fecha o turno no pertenezca al horario activo actual.
-- Mantener disponible la eliminación de modificaciones bloqueadas.
+- Mantener el formulario actual para editar una modificación existente.
 - Mantener los filtros de usuarios, el resumen mensual por usuario y los pipes compartidos existentes.
 - Mantener los endpoints actuales de creación, consulta individual, actualización y eliminación.
 
@@ -56,7 +54,6 @@ El diálogo debe mantener estado temporal para:
 - Turnos disponibles para la fecha seleccionada.
 - `turnoId` seleccionado.
 - Horas precargadas y editables.
-- Indicador de modificación bloqueada cuando el registro no coincide con el horario activo actual.
 
 La selección de turnos debe derivarse de `HorarioDetalle`:
 
@@ -77,8 +74,8 @@ La selección de turnos debe derivarse de `HorarioDetalle`:
 7. Limpiar el turno seleccionado, `horaInicio` y `horaFin` cuando cambie la fecha, y deshabilitar `Guardar` hasta seleccionar un turno válido.
 8. Al seleccionar un turno, precargar sus horas y conservar los campos de hora editables.
 9. Mantener la creación usando `POST /turno/:turnoId/modificar` con el `turnoId` seleccionado y el `usuarioId` del usuario seleccionado.
-10. Adaptar la edición para cargar la modificación existente, validar que su fecha y turno pertenezcan al horario activo y abrir el mismo formulario guiado.
-11. Mostrar una advertencia y bloquear los campos de edición cuando una modificación histórica no pueda asociarse al horario activo actual, sin bloquear su eliminación.
+10. Mantener la edición usando el formulario actual y el `turnoId` original de la modificación.
+11. Mantener disponible la eliminación de modificaciones históricas sin cambios en su flujo.
 12. Mantener la recarga del detalle del usuario y del resumen mensual después de crear, editar o eliminar una modificación.
 13. Ejecutar `npm run build` y corregir cualquier error de TypeScript o `strictTemplates`.
 
@@ -101,9 +98,8 @@ La selección de turnos debe derivarse de `HorarioDetalle`:
 - [ ] `horaInicio` y `horaFin` pueden editarse antes de guardar.
 - [ ] Crear envía el `turnoId` del turno seleccionado y no el de un turno de otro día.
 - [ ] Crear conserva el `usuarioId`, la fecha y el motivo del formulario actual.
-- [ ] Editar abre el mismo flujo fecha → turnos disponibles → turno.
-- [ ] Una modificación que no coincide con el horario activo actual muestra una advertencia y no permite editarse desde el flujo guiado.
-- [ ] Una modificación bloqueada continúa pudiendo eliminarse con confirmación.
+- [ ] Editar conserva el formulario actual y usa el `turnoId` original de la modificación.
+- [ ] Una modificación histórica continúa pudiendo eliminarse con confirmación.
 - [ ] Después de una operación exitosa se recargan el detalle del usuario y su resumen mensual.
 - [ ] No se agregan endpoints ni procedimientos SQL nuevos.
 - [ ] `npm run build` finaliza sin errores.
@@ -119,11 +115,11 @@ La selección de turnos debe derivarse de `HorarioDetalle`:
 - **Sí:** Horas precargadas y editables. Conserva las horas del turno como referencia y permite registrar una modificación real.
 - **Sí:** Limpiar selección al cambiar fecha. Evita guardar un turno y unas horas pertenecientes a otra fecha.
 - **Sí:** Días sin turnos no permiten horas manuales. Una modificación debe partir de un turno operativo existente.
-- **Sí:** Edición con el mismo flujo guiado. Aplica la misma regla de coherencia a creación y edición.
-- **Sí:** Bloquear edición de registros fuera del horario activo actual. Evita reasociar históricos ambiguos; la eliminación permanece disponible.
+- **Sí:** Edición con el formulario actual. El endpoint de actualización no permite cambiar `turnoId` y no se cambia el backend.
 - **Sí:** Solo frontend. Los endpoints actuales ya reciben `turnoId`, `usuarioId`, fecha y horas suficientes para el flujo.
 - **No:** Mantener la matriz semanal como acción de creación. La selección de fecha posterior provoca la ambigüedad que esta especificación corrige.
 - **No:** Mostrar horas manuales en días libres. Permitirlo rompería la relación entre una modificación y un turno configurado.
+- **No:** Cambiar el turno durante edición. `PUT /turno/:turnoId/modificar/:id` no admite reasignar el turno.
 - **No:** Cambiar backend. No se requiere modificar contratos ni procedimientos SQL.
 - **No:** Persistir el estado del diálogo. La selección solo pertenece a la operación actual.
 
@@ -135,7 +131,7 @@ La selección de turnos debe derivarse de `HorarioDetalle`:
 | ------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------- |
 | La fecha seleccionada no pertenece a ningún grupo rotativo   | Mostrar fecha sin turnos y mantener deshabilitado el guardado.                                                                          |
 | La asignación activa cambia mientras el diálogo está abierto | Validar contra el detalle recibido y dejar que el backend rechace inconsistencias; mostrar su mensaje.                                  |
-| Una modificación histórica no coincide con el horario actual | Mostrar advertencia, bloquear edición guiada y conservar eliminación.                                                                   |
+| Una modificación histórica no coincide con el horario actual | Mantener el formulario de edición actual, que opera con el turno original.                                                              |
 | El turno seleccionado se desincroniza con la fecha           | Limpiar selección al cambiar fecha y enviar siempre el `turnoId` seleccionado.                                                          |
 | La fecha de inicio de asignación es nula                     | Usar hoy como fecha inicial solo si está dentro de una vigencia calculable; de lo contrario, abrir sin turno y exigir una fecha válida. |
 

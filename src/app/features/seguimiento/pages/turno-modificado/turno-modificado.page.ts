@@ -20,7 +20,6 @@ import { PaginadorDataSource } from '../../../../core/datasources/paginador-data
 import { Area } from '../../../../core/interfaces/area.interface';
 import {
   HorarioDetalle,
-  HorarioTurno,
   UsuarioHorarioAsignacion,
 } from '../../../../core/interfaces/horario.interface';
 import { Unidad } from '../../../../core/interfaces/unidad.interface';
@@ -78,7 +77,7 @@ import UsuariosTurnoModificado from './components/usuarios-turno-modificado.ng';
         [assignment]="asignacionActiva()"
         [detail]="horarioDetalle()"
         [loading]="cargandoDetalle()"
-        (turnSelected)="crearModificacion($event)"
+        (nuevaModificacion)="crearModificacion()"
       />
       @if (usuarioSeleccionado()) {
         <resumen-mensual-turno-modificado
@@ -187,13 +186,16 @@ export default class TurnoModificadoPage {
     this.cargarDetalleUsuario();
     this.cargarResumen();
   }
-  crearModificacion(turno: HorarioTurno): void {
+  crearModificacion(): void {
     const user = this.usuarioSeleccionado();
-    if (!user) return;
+    const asignacion = this.asignacionActiva();
+    const horarioDetalle = this.horarioDetalle();
+    if (!user || !asignacion || !horarioDetalle) return;
     this.abrirDialog({
-      turnoId: turno.turnoId,
+      modo: 'crear',
       usuarioId: user.usuarioId,
-      ...this.rangoMes(),
+      asignacion,
+      horarioDetalle,
     });
   }
   editarModificacion(item: ResumenModificacion): void {
@@ -205,6 +207,7 @@ export default class TurnoModificadoPage {
         next: (modificacion) => {
           this.editandoId.set(null);
           this.abrirDialog({
+            modo: 'editar',
             turnoId: item.modificacion.turnoId,
             usuarioId: modificacion.usuarioId,
             modificacion,
