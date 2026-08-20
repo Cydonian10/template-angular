@@ -14,6 +14,7 @@ interface Matriz {
 
 @Component({
   selector: 'horario-usuario-turno-modificado',
+  host: { class: 'block' },
   template: `
     @if (usuario(); as user) {
       <section class="card border border-base-300 bg-base-100">

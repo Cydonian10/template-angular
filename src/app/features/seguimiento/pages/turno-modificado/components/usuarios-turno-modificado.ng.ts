@@ -9,6 +9,7 @@ import { PaginadorDataSource } from '../../../../../core/datasources/paginador-d
 
 @Component({
   selector: 'usuarios-turno-modificado',
+  host: { class: 'block' },
   imports: [FontAwesomeModule, PaginatorNg],
   template: `
     <section class="card border border-base-300 bg-base-100">
@@ -92,6 +93,9 @@ import { PaginadorDataSource } from '../../../../../core/datasources/paginador-d
                 @for (usuario of rows(); track usuario.usuarioId) {
                   <tr
                     [class.bg-primary]="
+                      selected()?.usuarioId === usuario.usuarioId
+                    "
+                    [class.text-primary-content]="
                       selected()?.usuarioId === usuario.usuarioId
                     "
                   >

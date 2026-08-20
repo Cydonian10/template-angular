@@ -1,11 +1,14 @@
 import { Component, inject, input, output } from '@angular/core';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { FontIconService } from '../../../../../core/services/icon.service';
+import { FechaCortaPipe } from '../../../../../shared/pipes/fecha-corta.pipe';
+import { HoraAmPmPipe } from '../../../../../shared/pipes/hora-am-pm.pipe';
 import { ResumenModificacion } from './turno-modificado.types';
 
 @Component({
   selector: 'resumen-mensual-turno-modificado',
-  imports: [FontAwesomeModule],
+  host: { class: 'block' },
+  imports: [FontAwesomeModule, FechaCortaPipe, HoraAmPmPipe],
   template: `
     <section class="card border border-base-300 bg-base-100">
       <div class="card-body gap-4">
@@ -65,11 +68,11 @@ import { ResumenModificacion } from './turno-modificado.types';
                   track item.modificacion.turnoModificadoId
                 ) {
                   <tr>
-                    <td>{{ formatDate(item.modificacion.fecha) }}</td>
+                    <td>{{ item.modificacion.fecha | fechaCorta }}</td>
                     <td>{{ item.horarioNombre }}</td>
                     <td class="font-mono">
-                      {{ formatTime(item.modificacion.horaInicio) }} -
-                      {{ formatTime(item.modificacion.horaFin) }}
+                      {{ item.modificacion.horaInicio | horaAmPm }} -
+                      {{ item.modificacion.horaFin | horaAmPm }}
                     </td>
                     <td class="space-x-1 text-end">
                       <button
@@ -112,11 +115,4 @@ export default class ResumenMensualTurnoModificado {
   monthChange = output<number>();
   edit = output<ResumenModificacion>();
   remove = output<ResumenModificacion>();
-  formatDate(value: string): string {
-    const [year, month, day] = value.slice(0, 10).split('-');
-    return `${day}/${month}/${year}`;
-  }
-  formatTime(value: string): string {
-    return value.slice(0, 5);
-  }
 }

@@ -37,6 +37,7 @@ export interface ModificacionTurnoDialogResult {
 
 @Component({
   selector: 'modificacion-turno-dialog',
+  host: { class: 'block' },
   imports: [FontAwesomeModule, ReactiveFormsModule],
   template: `
     <div class="card w-full border border-base-300 bg-base-100 shadow-xl">
