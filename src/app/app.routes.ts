@@ -38,6 +38,14 @@ export const routes: Routes = [
             loadChildren: () =>
               import('./features/configuracion/configuracion.routes'),
           },
+          {
+            path: 'seguimiento',
+            data: {
+              breadcrumb: 'Seguimiento',
+            },
+            loadChildren: () =>
+              import('./features/seguimiento/seguimiento.routes'),
+          },
         ],
       },
     ],
