@@ -1,6 +1,6 @@
 # SPEC 05 — Pantalla Motivos (mantenimiento)
 
-> **Status:** Aprobado
+> **Status:** Implementado
 > **Depends on:** `api-scap` SPEC 04 — Módulo Motivo con CRUD de catálogo (estado Aprobado)
 > **Date:** 2026-08-21
 > **Objective:** Crear la pantalla `Mantenimiento > Motivo` en `/mantenimiento/motivo` para administrar el catálogo de motivos con CRUD, búsqueda y paginación local.
@@ -103,33 +103,33 @@ Convenciones:
 
 ## Acceptance criteria
 
-- [ ] El menú existente `Mantenimiento > Motivo` navega a `/mantenimiento/motivo`.
-- [ ] La ruta carga `motivo.page.ts` y muestra el breadcrumb `Motivo`.
-- [ ] La página consulta `GET /motivos` al cargar.
-- [ ] La tabla muestra nombre, descripción, indicador de documento requerido y acciones.
-- [ ] La búsqueda local filtra por nombre y descripción sin distinguir mayúsculas y minúsculas.
-- [ ] Cambiar la búsqueda reinicia la paginación a la primera página.
-- [ ] La tabla usa `PaginadorDataSource` y `ng-paginator` para paginar en frontend.
-- [ ] El tamaño de página puede cambiarse mediante las opciones del paginador compartido.
-- [ ] `Nuevo motivo` abre el diálogo en modo creación.
-- [ ] El formulario exige un nombre no vacío y limita su longitud a 100 caracteres.
-- [ ] El formulario permite una descripción opcional de hasta 255 caracteres.
-- [ ] El formulario permite activar o desactivar `documentoRequerido`.
-- [ ] Crear un motivo válido llama `POST /motivos` con nombre, descripción y valor booleano.
-- [ ] Una creación exitosa cierra el diálogo, muestra toastr y actualiza la lista.
-- [ ] Una creación inválida no llama a la API y muestra errores bajo los campos correspondientes.
-- [ ] Editar un motivo llama `GET /motivos/:id` antes de abrir el diálogo.
-- [ ] El diálogo de edición precarga el detalle recibido.
-- [ ] Guardar una edición válida llama `PUT /motivos/:id`.
-- [ ] Una edición exitosa cierra el diálogo, muestra toastr y actualiza la lista.
-- [ ] Eliminar un motivo solicita confirmación antes de llamar a la API.
-- [ ] Confirmar la eliminación llama `DELETE /motivos/:id`.
-- [ ] Cancelar la eliminación no llama al endpoint DELETE.
-- [ ] Una eliminación exitosa muestra toastr y quita el motivo de la lista activa.
-- [ ] Los errores de API se muestran con toastr y no abandonan la pantalla.
-- [ ] Los estados de carga deshabilitan las acciones afectadas mientras la operación está en curso.
-- [ ] No se agregan endpoints ni cambios en `api-scap`.
-- [ ] `npm run build` finaliza sin errores.
+- [x] El menú existente `Mantenimiento > Motivo` navega a `/mantenimiento/motivo`.
+- [x] La ruta carga `motivo.page.ts` y muestra el breadcrumb `Motivo`.
+- [x] La página consulta `GET /motivos` al cargar.
+- [x] La tabla muestra nombre, descripción, indicador de documento requerido y acciones.
+- [x] La búsqueda local filtra por nombre y descripción sin distinguir mayúsculas y minúsculas.
+- [x] Cambiar la búsqueda reinicia la paginación a la primera página.
+- [x] La tabla usa `PaginadorDataSource` y `ng-paginator` para paginar en frontend.
+- [x] El tamaño de página puede cambiarse mediante las opciones del paginador compartido.
+- [x] `Nuevo motivo` abre el diálogo en modo creación.
+- [x] El formulario exige un nombre no vacío y limita su longitud a 100 caracteres.
+- [x] El formulario permite una descripción opcional de hasta 255 caracteres.
+- [x] El formulario permite activar o desactivar `documentoRequerido`.
+- [x] Crear un motivo válido llama `POST /motivos` con nombre, descripción y valor booleano.
+- [x] Una creación exitosa cierra el diálogo, muestra toastr y actualiza la lista.
+- [x] Una creación inválida no llama a la API y muestra errores bajo los campos correspondientes.
+- [x] Editar un motivo llama `GET /motivos/:id` antes de abrir el diálogo.
+- [x] El diálogo de edición precarga el detalle recibido.
+- [x] Guardar una edición válida llama `PUT /motivos/:id`.
+- [x] Una edición exitosa cierra el diálogo, muestra toastr y actualiza la lista.
+- [x] Eliminar un motivo solicita confirmación antes de llamar a la API.
+- [x] Confirmar la eliminación llama `DELETE /motivos/:id`.
+- [x] Cancelar la eliminación no llama al endpoint DELETE.
+- [x] Una eliminación exitosa muestra toastr y quita el motivo de la lista activa.
+- [x] Los errores de API se muestran con toastr y no abandonan la pantalla.
+- [x] Los estados de carga deshabilitan las acciones afectadas mientras la operación está en curso.
+- [x] No se agregan endpoints ni cambios en `api-scap`.
+- [x] `npm run build` finaliza sin errores.
 
 ---
 
