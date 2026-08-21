@@ -206,14 +206,17 @@ export default class ModificacionTurnoDialog {
   turnosDisponibles = signal<HorarioTurno[]>(
     this.turnosParaFecha(this.fechaInicial),
   );
+
   fechaMinima =
     this.data.modo === 'crear'
       ? this.fechaAsignacionInicio()
       : this.data.fechaMinima;
+
   fechaMaxima =
     this.data.modo === 'crear'
       ? (this.data.asignacion.fechaFin?.slice(0, 10) ?? '')
       : this.data.fechaMaxima;
+
   form = this.#fb.nonNullable.group({
     fecha: [
       this.fechaInicial,
@@ -353,6 +356,13 @@ export default class ModificacionTurnoDialog {
   }
 
   formatearHora(value: string): string {
+    if (!value) return '';
+
+    const iso = value.match(/T(\d{2}):(\d{2})/);
+
+    if (iso) {
+      return `${iso[1]}:${iso[2]}`;
+    }
     return value.slice(0, 5);
   }
 }
