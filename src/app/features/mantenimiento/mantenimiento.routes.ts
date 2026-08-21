@@ -6,6 +6,11 @@ import { Routes } from '@angular/router';
 
 const mantenimientoRoutes: Routes = [
   {
+    path: 'motivo',
+    data: { breadcrumb: 'Motivo' },
+    loadComponent: () => import('./pages/motivo/motivo.page'),
+  },
+  {
     path: 'unidades',
     data: { breadcrumb: 'Unidades' },
     children: [
