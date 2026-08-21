@@ -112,7 +112,9 @@ export interface ModificacionTurnoDialogResult {
                   <span>No hay turnos disponibles para esta fecha.</span>
                 </div>
               }
-              @if (form.controls.turnoId.invalid && form.controls.turnoId.touched) {
+              @if (
+                form.controls.turnoId.invalid && form.controls.turnoId.touched
+              ) {
                 <p class="text-xs text-error">Selecciona un turno válido.</p>
               }
             </fieldset>
@@ -121,15 +123,28 @@ export interface ModificacionTurnoDialogResult {
           <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <fieldset class="fieldset">
               <legend class="fieldset-legend">Hora inicio *</legend>
-              <input type="time" class="input w-full" formControlName="horaInicio" />
-              @if (form.controls.horaInicio.invalid && form.controls.horaInicio.touched) {
+              <input
+                type="time"
+                class="input w-full"
+                formControlName="horaInicio"
+              />
+              @if (
+                form.controls.horaInicio.invalid &&
+                form.controls.horaInicio.touched
+              ) {
                 <p class="text-xs text-error">Ingresa la hora de inicio.</p>
               }
             </fieldset>
             <fieldset class="fieldset">
               <legend class="fieldset-legend">Hora fin *</legend>
-              <input type="time" class="input w-full" formControlName="horaFin" />
-              @if (form.controls.horaFin.invalid && form.controls.horaFin.touched) {
+              <input
+                type="time"
+                class="input w-full"
+                formControlName="horaFin"
+              />
+              @if (
+                form.controls.horaFin.invalid && form.controls.horaFin.touched
+              ) {
                 <p class="text-xs text-error">Ingresa la hora de fin.</p>
               }
             </fieldset>
@@ -145,15 +160,29 @@ export interface ModificacionTurnoDialogResult {
               placeholder="Motivo de la modificación (opcional)"
             ></textarea>
             @if (form.controls.motivo.invalid && form.controls.motivo.touched) {
-              <p class="text-xs text-error">El motivo no puede superar 255 caracteres.</p>
+              <p class="text-xs text-error">
+                El motivo no puede superar 255 caracteres.
+              </p>
             }
           </fieldset>
 
           <div class="card-actions justify-end pt-2">
-            <button type="button" class="btn btn-ghost" [disabled]="guardando()" (click)="cancelar()">Cancelar</button>
-            <button type="submit" class="btn btn-primary" [disabled]="guardando() || !puedeGuardar()">
+            <button
+              type="button"
+              class="btn btn-ghost"
+              [disabled]="guardando()"
+              (click)="cancelar()"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              class="btn btn-primary"
+              [disabled]="guardando()"
+            >
               @if (guardando()) {
-                <fa-icon [icon]="iconService.faSpinner" [animation]="'spin'" /> Guardando
+                <fa-icon [icon]="iconService.faSpinner" [animation]="'spin'" />
+                Guardando
               } @else {
                 <fa-icon [icon]="iconService.faSave" /> Guardar
               }
@@ -174,21 +203,51 @@ export default class ModificacionTurnoDialog {
 
   esCreacion = signal(this.data.modo === 'crear');
   guardando = signal(false);
-  turnosDisponibles = signal<HorarioTurno[]>(this.turnosParaFecha(this.fechaInicial));
-  fechaMinima = this.data.modo === 'crear'
-    ? this.fechaAsignacionInicio()
-    : this.data.fechaMinima;
-  fechaMaxima = this.data.modo === 'crear'
-    ? this.data.asignacion.fechaFin?.slice(0, 10) ?? ''
-    : this.data.fechaMaxima;
+  turnosDisponibles = signal<HorarioTurno[]>(
+    this.turnosParaFecha(this.fechaInicial),
+  );
+  fechaMinima =
+    this.data.modo === 'crear'
+      ? this.fechaAsignacionInicio()
+      : this.data.fechaMinima;
+  fechaMaxima =
+    this.data.modo === 'crear'
+      ? (this.data.asignacion.fechaFin?.slice(0, 10) ?? '')
+      : this.data.fechaMaxima;
   form = this.#fb.nonNullable.group({
-    fecha: [this.fechaInicial, [Validators.required, fechaEnRango(this.fechaMinima, this.fechaMaxima || undefined)]],
+    fecha: [
+      this.fechaInicial,
+      [
+        Validators.required,
+        fechaEnRango(this.fechaMinima, this.fechaMaxima || undefined),
+      ],
+    ],
     turnoId: ['', this.data.modo === 'crear' ? Validators.required : []],
-    horaInicio: [this.data.modo === 'editar' ? this.formatearHora(this.data.modificacion.horaInicio) : '', Validators.required],
-    horaFin: [this.data.modo === 'editar' ? this.formatearHora(this.data.modificacion.horaFin) : '', Validators.required],
-    motivo: [this.data.modo === 'editar' ? this.data.modificacion.motivo ?? '' : '', Validators.maxLength(255)],
+    horaInicio: [
+      this.data.modo === 'editar'
+        ? this.formatearHora(this.data.modificacion.horaInicio)
+        : '',
+      Validators.required,
+    ],
+    horaFin: [
+      this.data.modo === 'editar'
+        ? this.formatearHora(this.data.modificacion.horaFin)
+        : '',
+      Validators.required,
+    ],
+    motivo: [
+      this.data.modo === 'editar' ? (this.data.modificacion.motivo ?? '') : '',
+      Validators.maxLength(255),
+    ],
   });
-  puedeGuardar = computed(() => !this.esCreacion() || this.turnosDisponibles().length > 0 && !!this.form.controls.turnoId.value);
+
+  get puedeGuardar(): boolean {
+    return (
+      !this.esCreacion() ||
+      (this.turnosDisponibles().length > 0 &&
+        !!this.form.controls.turnoId.value)
+    );
+  }
 
   cambiarFecha(event: Event): void {
     if (!this.esCreacion()) return;
@@ -200,7 +259,9 @@ export default class ModificacionTurnoDialog {
 
   seleccionarTurno(event: Event): void {
     const turnoId = Number((event.target as HTMLSelectElement).value);
-    const turno = this.turnosDisponibles().find((item) => item.turnoId === turnoId);
+    const turno = this.turnosDisponibles().find(
+      (item) => item.turnoId === turnoId,
+    );
     if (!turno) {
       this.form.patchValue({ horaInicio: '', horaFin: '' });
       return;
@@ -212,7 +273,7 @@ export default class ModificacionTurnoDialog {
   }
 
   guardar(): void {
-    if (this.form.invalid || !this.puedeGuardar()) {
+    if (this.form.invalid || !this.puedeGuardar) {
       this.form.markAllAsTouched();
       return;
     }
@@ -224,9 +285,17 @@ export default class ModificacionTurnoDialog {
       horaFin: value.horaFin,
       motivo: value.motivo.trim() || null,
     };
-    const request = this.data.modo === 'crear'
-      ? this.#service.crear(Number(value.turnoId), { ...dto, usuarioId: this.data.usuarioId })
-      : this.#service.actualizar(this.data.turnoId, this.data.modificacion.turnoModificadoId, dto);
+    const request =
+      this.data.modo === 'crear'
+        ? this.#service.crear(Number(value.turnoId), {
+            ...dto,
+            usuarioId: this.data.usuarioId,
+          })
+        : this.#service.actualizar(
+            this.data.turnoId,
+            this.data.modificacion.turnoModificadoId,
+            dto,
+          );
     request.subscribe({
       next: (resultado) => {
         this.guardando.set(false);
@@ -247,7 +316,8 @@ export default class ModificacionTurnoDialog {
   }
 
   private get fechaInicial(): string {
-    if (this.data.modo === 'editar') return this.data.modificacion.fecha.slice(0, 10);
+    if (this.data.modo === 'editar')
+      return this.data.modificacion.fecha.slice(0, 10);
     const hoy = new Date().toISOString().slice(0, 10);
     const maxima = this.data.asignacion.fechaFin?.slice(0, 10);
     return hoy >= this.fechaAsignacionInicio() && (!maxima || hoy <= maxima)
@@ -257,15 +327,27 @@ export default class ModificacionTurnoDialog {
 
   private fechaAsignacionInicio(): string {
     return this.data.modo === 'crear'
-      ? this.data.asignacion.fechaInicio?.slice(0, 10) ?? new Date().toISOString().slice(0, 10)
+      ? (this.data.asignacion.fechaInicio?.slice(0, 10) ??
+          new Date().toISOString().slice(0, 10))
       : this.data.fechaMinima;
   }
 
   private turnosParaFecha(fecha: string): HorarioTurno[] {
-    if (this.data.modo !== 'crear' || !fecha || fecha < this.fechaAsignacionInicio() || (this.data.asignacion.fechaFin && fecha > this.data.asignacion.fechaFin.slice(0, 10))) return [];
+    if (
+      this.data.modo !== 'crear' ||
+      !fecha ||
+      fecha < this.fechaAsignacionInicio() ||
+      (this.data.asignacion.fechaFin &&
+        fecha > this.data.asignacion.fechaFin.slice(0, 10))
+    )
+      return [];
     const diaId = ((new Date(`${fecha}T00:00:00Z`).getUTCDay() + 6) % 7) + 1;
     const dias = this.data.horarioDetalle.rotativo
-      ? this.data.horarioDetalle.grupos.find((grupo) => (!grupo.fechaInicio || fecha >= grupo.fechaInicio.slice(0, 10)) && (!grupo.fechaFin || fecha <= grupo.fechaFin.slice(0, 10)))?.dias ?? []
+      ? (this.data.horarioDetalle.grupos.find(
+          (grupo) =>
+            (!grupo.fechaInicio || fecha >= grupo.fechaInicio.slice(0, 10)) &&
+            (!grupo.fechaFin || fecha <= grupo.fechaFin.slice(0, 10)),
+        )?.dias ?? [])
       : this.data.horarioDetalle.dias;
     return dias.find((dia) => dia.diaId === diaId)?.turnos ?? [];
   }
