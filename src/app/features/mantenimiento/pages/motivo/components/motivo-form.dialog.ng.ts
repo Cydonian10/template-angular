@@ -142,7 +142,7 @@ export default class MotivoFormDialog {
     }
 
     const value = this.form.getRawValue();
-    const base = {
+    const base: CrearMotivoDto = {
       nombre: value.nombre.trim(),
       descripcion: value.descripcion.trim() || null,
       documentoRequerido: value.documentoRequerido,
@@ -159,7 +159,7 @@ export default class MotivoFormDialog {
           this.data.motivo.motivoId,
           base satisfies ActualizarMotivoDto,
         )
-      : this.#motivosService.crear(base satisfies CrearMotivoDto);
+      : this.#motivosService.crear(base);
 
     request
       .pipe(takeUntilDestroyed(this.#destroyRef))
